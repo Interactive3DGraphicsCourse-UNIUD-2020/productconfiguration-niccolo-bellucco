@@ -778,10 +778,16 @@
 			};
 
 			var cdiffmetal = {
-				red: 0.5,
-				green: 0.5,
-				blue: 0.5
+				red: 0.83,
+				green: 0.69,
+				blue: 0.22
 			}
+
+			var cdiffglass = {
+				red: 1.0,
+				green: 1.0,
+				blue: 1.0,
+			};
 
 			var cspec = {
 				red: 1.0,
@@ -791,6 +797,13 @@
 			};
 
 			var cspecmetal = {
+				red: 1.0,
+				green: 0.78,
+				blue: 0.34,
+				roughness: 0.2
+			};
+
+			var cspecglass = {
 				red: 1.0,
 				green: 1.0,
 				blue: 1.0,
@@ -807,15 +820,20 @@
 			var roughnessMapChair = textureLoader('textures/bigchair/Lrough.jpg');
 			var specularMapChair = textureLoader('textures/bigchair/Lspec.jpg');
 
+			var normalMapLegs = textureLoader('textures/bigchair/Wnormal.png');
+			var diffuseMapLegs = textureLoader('textures/bigchair/Wchair.jpg');
+			var specularMapLegs = textureLoader('textures/bigchair/Wspec.png');
+			var roughnessMapLegs = textureLoader('textures/bigchair/Wrough.png');
+
 			var loader = new THREE.CubeTextureLoader();
-			loader.setPath( 'textures/totality/' );
+			loader.setPath( 'textures/cubemap/' );
 
 			var textureCube = loader.load( [
-				'totality_bk.png', 'totality_ft.png', 
+				/*'totality_bk.png', 'totality_ft.png', 
 				'totality_dn.png', 'totality_up.png', 
-				'totality_lf.png', 'totality_rt.png',
+				'totality_lf.png', 'totality_rt.png',*/
 
-				/*'posx.png', 'negx.png',
+				'posx.png', 'negx.png',
 				'posy.png', 'negy.png',
 				'posz.png', 'negz.png'
 
@@ -837,12 +855,67 @@
 				normalScale: 0.0,
 				roughness: 0.2,
 				roughnessmetal: 0.2,
+				roughnessglass: 0.4,
 				repeatS: 1.0,
 				repeatT: 1.0,
 				textureMap: ''
 			}
+
+			var uniforms = {
+				/*mBias: { type: 'f', value: 0.1 },
+				mPower: { type: 'f', value: 2.0 },
+				mScale: { type: 'f', value: 1.0 },
+
+				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
+				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
+				roughness: { type: "f", value: 0.5 },*/
+				
+				diffuseMap: { type: "t", value: diffuseMap },
+				roughnessMap: { type: "t", value: roughnessMap },
+				specularMap: { type: "t", value: specularMap },
+				
+				normalMap:	{ type: "t", value: normalMap },
+				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
+
+				irradianceMap:	{ type: "t", value: irradianceMap},
+
+				textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
+
+				envMap: { type: "t", value: textureCube },
+
+				pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
+				pointLightPosition2: { type: "v3", value: new THREE.Vector3() },
+				pointLightPosition3: { type: "v3", value: new THREE.Vector3() },
+
+				clight:	{ type: "v3", value: new THREE.Vector3() },
+			};
 			
 			var uniformsMetal = {
+				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
+				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
+				roughness: { type: "f", value: 0.5 },
+				
+				normalMap:	{ type: "t", value: normalMapChair },
+				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
+
+				irradianceMap:	{ type: "t", value: irradianceMap},
+
+				textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
+
+				envMap: { type: "t", value: textureCube },
+
+				pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
+				pointLightPosition2: { type: "v3", value: new THREE.Vector3() },
+				pointLightPosition3: { type: "v3", value: new THREE.Vector3() },
+
+				clight:	{ type: "v3", value: new THREE.Vector3() },
+			};
+
+			var uniformsGlass = {
+				mBias: { type: 'f', value: 0.1 },
+				mPower: { type: 'f', value: 2.0 },
+				mScale: { type: 'f', value: 1.0 },
+
 				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
 				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
 				roughness: { type: "f", value: 0.5 },
@@ -877,35 +950,6 @@
 				specularMap: { type: "t", value: specularMapChair },
 				
 				normalMap:	{ type: "t", value: normalMapChair },
-				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				irradianceMap:	{ type: "t", value: irradianceMap},
-
-				textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				envMap: { type: "t", value: textureCube },
-
-				pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
-				pointLightPosition2: { type: "v3", value: new THREE.Vector3() },
-				pointLightPosition3: { type: "v3", value: new THREE.Vector3() },
-
-				clight:	{ type: "v3", value: new THREE.Vector3() },
-			};
-
-			var uniforms = {
-				mBias: { type: 'f', value: 0.1 },
-				mPower: { type: 'f', value: 2.0 },
-				mScale: { type: 'f', value: 1.0 },
-
-				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				roughness: { type: "f", value: 0.5 },
-				
-				diffuseMap: { type: "t", value: diffuseMap },
-				roughnessMap: { type: "t", value: roughnessMap },
-				specularMap: { type: "t", value: specularMap },
-				
-				normalMap:	{ type: "t", value: normalMap },
 				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
 
 				irradianceMap:	{ type: "t", value: irradianceMap},
@@ -1014,6 +1058,11 @@
 				if ( intersects.length > 0 ) {
 					console.log(intersects[0].object.name);
 					selection = intersects[0].object.name;
+
+					scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
+						color: 0xff0000, 
+						opacity: 0.3, 
+						transparent: true});
 				}
 			}
 
@@ -1059,28 +1108,40 @@
 			}
 
 			function updateUniforms() {
-				uniforms.cdiff.value = new THREE.Vector3(
+				/*uniforms.cdiff.value = new THREE.Vector3(
 					cdiff.red,
 					cdiff.green,
 					cdiff.blue
-				);
+				);*/
 
 				uniformsMetal.cdiff.value = new THREE.Vector3(
 					cdiffmetal.red,
 					cdiffmetal.green,
 					cdiffmetal.blue
 				)
+
+				uniformsGlass.cdiff.value = new THREE.Vector3(
+					cdiffglass.red,
+					cdiffglass.green,
+					cdiffglass.blue
+				);
 				
-				uniforms.cspec.value = new THREE.Vector3(
+				/*uniforms.cspec.value = new THREE.Vector3(
 					cspec.red,
 					cspec.green,
 					cspec.blue
-				);
+				);*/
 
 				uniformsMetal.cspec.value = new THREE.Vector3(
 					cspecmetal.red,
 					cspecmetal.green,
 					cspecmetal.blue
+				);
+
+				uniformsGlass.cspec.value = new THREE.Vector3(
+					cspecglass.red,
+					cspecglass.green,
+					cspecglass.blue
 				);
 
 				uniforms.clight.value = new THREE.Vector3(
@@ -1095,6 +1156,12 @@
 					lightParameters.blue * lightParameters.intensity
 				);
 
+				uniformsGlass.clight.value = new THREE.Vector3(
+					lightParameters.red * lightParameters.intensity,
+					lightParameters.green * lightParameters.intensity,
+					lightParameters.blue * lightParameters.intensity
+				);
+
 				uniforms.textureRepeat.value = new THREE.Vector2( 
 					textureParameters.repeatS, 
 					textureParameters.repeatT
@@ -1103,8 +1170,10 @@
 				uniforms.specularMap.value = specularMap;
 				uniforms.diffuseMap.value = diffuseMap;
 				uniforms.roughnessMap.value = roughnessMap;
+
 				uniforms.normalMap.value = normalMap;
 				uniformsMetal.normalMap.value = normalMap;
+				uniformsGlass.normalMap.value = normalMap;
 
 				uniforms.normalScale.value = new THREE.Vector2( 
 					textureParameters.normalScale, 
@@ -1114,9 +1183,14 @@
 					textureParameters.normalScale, 
 					textureParameters.normalScale 
 				);
+				uniformsGlass.normalScale.value = new THREE.Vector2( 
+					textureParameters.normalScale, 
+					textureParameters.normalScale 
+				);
 
-				uniforms.roughness.value = textureParameters.roughness;
+				//uniforms.roughness.value = textureParameters.roughness;
 				uniformsMetal.roughness.value = textureParameters.roughnessmetal;
+				uniformsGlass.roughness.value = textureParameters.roughnessglass;
 			}
 
 			function updateUniformsChair() {
@@ -1162,14 +1236,14 @@
 			}
 
 			var woodShader = function() {
-				this.wood = function() {
-					textureParameters.roughness = 0.5;
+				this.material = function() {
+					/*textureParameters.roughness = 0.5;
 					cdiff.red = 0.5;
 					cdiff.green = 0.5;
 					cdiff.blue = 0.5;
 					cspec.red = 0.8;
 					cspec.green = 0.8;
-					cspec.blue = 0.8;
+					cspec.blue = 0.8;*/
 					
 					//shaderMaterial.fragmentShader = document.getElementById('fs_wood').textContent;
 
@@ -1198,13 +1272,13 @@
 
 			var goldShader = function() {
 				this.gold = function() {
-					textureParameters.roughnessmetal = 0.25;
+					/*textureParameters.roughnessmetal = 0.25;
 					cdiffmetal.red = 0.83;
 					cdiffmetal.green = 0.69;
 					cdiffmetal.blue = 0.22;
 					cspecmetal.red = 1.0;
 					cspecmetal.green = 0.78;
-					cspecmetal.blue = 0.34;
+					cspecmetal.blue = 0.34;*/
 
 					//shaderMaterial.fragmentShader = document.getElementById('fs_gold').textContent;
 
@@ -1236,19 +1310,19 @@
 
 			var glassShader = function() {
 				this.glass = function() {
-					textureParameters.roughness = 0.3;
-					cdiff.red = 1.0;
-					cdiff.blue = 1.0;
-					cdiff.green = 1.0;
-					cspec.red = 0.8;
-					cspec.green = 0.8;
-					cspec.blue = 0.8;
+					/*textureParameters.roughnessglass = 0.3;
+					cdiffglass.red = 1.0;
+					cdiffglass.blue = 1.0;
+					cdiffglass.green = 1.0;
+					cspecglass.red = 0.8;
+					cspecglass.green = 0.8;
+					cspecglass.blue = 0.8;*/
 					//shaderMaterial.fragmentShader = document.getElementById('fs_refraction').textContent;
 					
 					var selected = scene.getObjectByName(selection);
 					selected.material = new THREE.ShaderMaterial({
 						extensions: materialExtensions,
-						uniforms: uniforms,
+						uniforms: uniformsGlass,
 						vertexShader: document.getElementById('vs').textContent,
 						fragmentShader: document.getElementById('fs_refraction').textContent
 					});
@@ -1272,11 +1346,12 @@
 				clearGui();
 
 				gui.add(textureParameters,'normalScale').min(-3).max(3)
-				gui.add(textureParameters,'roughness').min(0).max(1);
-				gui.add(cdiff,'red').min(0).max(1);
-				gui.add(cdiff,'green').min(0).max(1);
-				gui.add(cdiff,'blue').min(0).max(1);
-				gui.add(woodMaterial, 'wood');
+				gui.add(textureParameters,'roughnessmetal').min(0).max(1);
+				gui.add(textureParameters,'roughnessglass').min(0).max(1);
+				gui.add(cdiffmetal,'red').min(0).max(1);
+				gui.add(cdiffmetal,'green').min(0).max(1);
+				gui.add(cdiffmetal,'blue').min(0).max(1);
+				gui.add(woodMaterial, 'material');
 				gui.add(goldMaterial, 'gold');
 				gui.add(glassMaterial, 'glass');
 			}
