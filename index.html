@@ -602,7 +602,7 @@
 			var textureParameters = {
 				normalScale: 0.0,
 				roughness: 0.2,
-				roughnessmetal: 0.2,
+				roughness: 0.2,
 				repeatS: 1.0,
 				repeatT: 1.0,
 				textureMap: ''
@@ -775,6 +775,91 @@
 				gui = new dat.GUI();
 				gui.open();
 			}
+
+			var woodShader = function() {
+				this.wood = function() {
+					textureParameters.roughness = 0.5;
+					cdiff.red = 0.5;
+					cdiff.green = 0.5;
+					cdiff.blue = 0.5;
+					cspec.red = 0.8;
+					cspec.green = 0.8;
+					cspec.blue = 0.8;
+					
+					//shaderMaterial.fragmentShader = document.getElementById('fs_wood').textContent;
+
+					mesh.children[0].material = new THREE.ShaderMaterial({
+						extensions: materialExtensions,
+						uniforms: uniforms,
+						vertexShader: document.getElementById('vs').textContent,
+						fragmentShader: document.getElementById('fs').textContent
+					});
+
+					scene.remove(mesh);
+					mesh.children[0].geometry.dispose();
+					mesh.children[0].material.dispose();
+					
+					buildGui();
+				}
+			}
+			var woodMaterial = new woodShader();
+
+			var goldShader = function() {
+				this.gold = function() {
+					textureParameters.roughness = 0.25;
+					cdiff.red = 0.83;
+					cdiff.green = 0.69;
+					cdiff.blue = 0.22;
+					cspec.red = 1.0;
+					cspec.green = 0.78;
+					cspec.blue = 0.34;
+
+					//shaderMaterial.fragmentShader = document.getElementById('fs_gold').textContent;
+
+					mesh.children[0].material = new THREE.ShaderMaterial({
+						extensions: materialExtensions,
+						uniforms: uniforms,
+						vertexShader: document.getElementById('vs').textContent,
+						fragmentShader: document.getElementById('fs_gold').textContent
+					});
+					//document.getElementById('fs_gold').textContent;
+
+					scene.remove(mesh);
+					mesh.children[0].geometry.dispose();
+					mesh.children[0].material.dispose();
+					
+					buildGui();
+				}
+			}
+			var goldMaterial = new goldShader();
+
+			var glassShader = function() {
+				this.glass = function() {
+					textureParameters.roughness = 0.3;
+					cdiff.red = 1.0;
+					cdiff.blue = 1.0;
+					cdiff.green = 1.0;
+					cspec.red = 0.8;
+					cspec.green = 0.8;
+					cspec.blue = 0.8;
+					
+					//shaderMaterial.fragmentShader = document.getElementById('fs_refraction').textContent;
+					mesh.children[0].material = new THREE.ShaderMaterial({
+						extensions: materialExtensions,
+						uniforms: uniforms,
+						vertexShader: document.getElementById('vs').textContent,
+						fragmentShader: document.getElementById('fs_refraction').textContent
+					});
+
+					scene.remove(mesh);
+					mesh.children[0].geometry.dispose();
+					mesh.children[0].material.dispose();
+					
+					buildGui();
+				}
+			}
+			var glassMaterial = new glassShader();
+
             function buildGui() {
 				clearGui();
 
@@ -783,6 +868,9 @@
 				gui.add(cdiff,'red').min(0).max(1);
 				gui.add(cdiff,'green').min(0).max(1);
 				gui.add(cdiff,'blue').min(0).max(1);
+				gui.add(woodMaterial, 'wood');
+				gui.add(goldMaterial, 'gold');
+				gui.add(glassMaterial, 'glass');
 			}
 
 			modelLoader("ninjaHead");
