@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>Lambertian BRDF Shaders</title>
+		<title>Product Configuration Project 2019/2020</title>
 		<style>
 			canvas { width: 100%; height: 100%; }
 			body{ margin: 0; }
@@ -40,7 +40,7 @@
 			}
 		</script>
 
-		<script type='text/x-glsl' id='fs'>
+		<script type='text/x-glsl' id='fs_wood'>
 			precision highp float;
 			precision highp int;
 
@@ -707,7 +707,23 @@
 				//scene.add(lightMesh3);
 
 				scene.background = textureCube;
+				document.addEventListener( 'mousedown', onDocumentMouseDown );
 				controls.update();
+			}
+
+			function onDocumentMouseDown( event ) {    
+				event.preventDefault();
+				var mouse3D = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1,   
+					-( event.clientY / window.innerHeight ) * 2 + 1,  
+					0.5 );     
+				var raycaster =  new THREE.Raycaster();                                        
+				raycaster.setFromCamera( mouse3D, camera );
+				var intersects = raycaster.intersectObjects( objects);
+				
+				if ( intersects.length > 0 ) {
+					console.log(intersects[0].object.name);
+					selection = intersects[0].object.name;
+				}
 			}
 
             function Update(time) {
@@ -804,16 +820,23 @@
 					
 					//shaderMaterial.fragmentShader = document.getElementById('fs_wood').textContent;
 
-					mesh.children[0].material = new THREE.ShaderMaterial({
+					var selected = scene.getObjectByName(selection);
+					selected.material = new THREE.ShaderMaterial({
 						extensions: materialExtensions,
 						uniforms: uniforms,
 						vertexShader: document.getElementById('vs').textContent,
-						fragmentShader: document.getElementById('fs').textContent
+						fragmentShader: document.getElementById('fs_wood').textContent
 					});
 
-					scene.remove(mesh);
-					mesh.children[0].geometry.dispose();
-					mesh.children[0].material.dispose();
+					scene.remove(selected);
+					selected.geometry.dispose();
+					selected.material.dispose();
+
+					/*for(i=0; i<mesh.children.length; i++) {
+						scene.remove(mesh.children[i]);
+						mesh.children[i].geometry.dispose();
+						mesh.children[i].material.dispose();
+					}*/
 					
 					buildGui();
 				}
@@ -832,7 +855,8 @@
 
 					//shaderMaterial.fragmentShader = document.getElementById('fs_gold').textContent;
 
-					mesh.children[0].material = new THREE.ShaderMaterial({
+					var selected = scene.getObjectByName(selection);
+					selected.material = new THREE.ShaderMaterial({
 						extensions: materialExtensions,
 						uniforms: uniforms,
 						vertexShader: document.getElementById('vs').textContent,
@@ -840,9 +864,17 @@
 					});
 					//document.getElementById('fs_gold').textContent;
 
-					scene.remove(mesh);
-					mesh.children[0].geometry.dispose();
-					mesh.children[0].material.dispose();
+					
+					scene.remove(selected);
+					selected.geometry.dispose();
+					selected.material.dispose();
+
+					/*
+					for(i=0; i<mesh.children.length; i++) {
+						scene.remove(mesh.children[i]);
+						mesh.children[i].geometry.dispose();
+						mesh.children[i].material.dispose();
+					}*/
 					
 					buildGui();
 				}
@@ -858,18 +890,25 @@
 					cspec.red = 0.8;
 					cspec.green = 0.8;
 					cspec.blue = 0.8;
-					
 					//shaderMaterial.fragmentShader = document.getElementById('fs_refraction').textContent;
-					mesh.children[0].material = new THREE.ShaderMaterial({
+					
+					var selected = scene.getObjectByName(selection);
+					selected.material = new THREE.ShaderMaterial({
 						extensions: materialExtensions,
 						uniforms: uniforms,
 						vertexShader: document.getElementById('vs').textContent,
 						fragmentShader: document.getElementById('fs_refraction').textContent
 					});
+					
+					scene.remove(selected);
+					selected.geometry.dispose();
+					selected.material.dispose();
 
-					scene.remove(mesh);
-					mesh.children[0].geometry.dispose();
-					mesh.children[0].material.dispose();
+					/*for(i=0; i<mesh.children.length; i++) {
+						scene.remove(mesh.children[i]);
+						mesh.children[i].geometry.dispose();
+						mesh.children[i].material.dispose();
+					}*/
 					
 					buildGui();
 				}
