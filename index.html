@@ -546,7 +546,11 @@
 			var lightMesh, lightMesh2, lightMesh3;
 			var textureCube;
 
+			var shaderMaterial, mesh;
+
 			var loadedModel = false;
+			var objects = new Array();
+			var selection = '';
 
 			var lightParameters = {
 				red: 1.0,
@@ -722,9 +726,21 @@
 
 			function Render() {
 				if(loadedModel) {
-                    mesh.position.x = 0;
-                    mesh.position.y = -15;
-                    mesh.position.z = 0;
+                    if(mesh.name=='bigchair') {
+						mesh.position.x = 6;
+						mesh.position.y = -5;
+						mesh.position.z = 3;
+
+						mesh.rotation.z = 60 * 3.14159 / 180;
+						mesh.rotation.x = - 90 * 3.14159 / 180;
+						
+					} else if(mesh.name=='dresser') {
+						mesh.position.x = -7;
+						mesh.position.y = -5;
+						mesh.position.z = -2;
+
+						mesh.rotation.y = 45 * 3.14159 / 180;
+					}
 
 					scene.add(mesh);
 				}
@@ -873,7 +889,8 @@
 				gui.add(glassMaterial, 'glass');
 			}
 
-			modelLoader("ninjaHead");
+			modelLoader("dresser");
+			modelLoader("bigchair");
 			Start();
 			buildGui();
 			Update();
@@ -888,12 +905,18 @@
 						shaderMaterial.needsUpdate = true;
 
 						mesh = obj;
-						mesh.scale.multiplyScalar( 0.1 );
+						mesh.scale.multiplyScalar( 0.07 );
 						mesh.name = name;
 
 						for (i=0; i<mesh.children.length; i++) {
-                            mesh.children[i].material = shaderMaterial;
+							if (name=='dresser')
+								mesh.children[i].material = shaderMaterial;//new THREE.MeshBasicMaterial({color: 0xff0000});
+							else if (name=='bigchair')
+								mesh.children[i].material = shaderMaterial;
+							
+								objects.push(mesh.children[i]);
 						}
+						//mesh.children[0].material = new THREE.MeshBasicMaterial({color: 0xff0000});
 
 						loadedModel = true;
 				} );
