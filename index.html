@@ -14,6 +14,7 @@
 		<script src='libs\GLTFLoader.js'></script>
 		<script src='libs\dat.gui.min.js'></script>
 		<script src='libs\BufferGeometryUtils.js'></script>
+		<script src='libs\SceneUtils.js'></script>
 
 		<script type='text/x-glsl' id='vs'>
 			attribute vec4 tangent;
@@ -778,9 +779,9 @@
 			};
 
 			var cdiffmetal = {
-				red: 0.83,
-				green: 0.69,
-				blue: 0.22
+				red: 1.0,
+				green: 1.0,
+				blue: 1.0,
 			}
 
 			var cdiffglass = {
@@ -826,21 +827,31 @@
 			var roughnessMapLegs = textureLoader('textures/bigchair/Wrough.png');
 
 			var loader = new THREE.CubeTextureLoader();
-			loader.setPath( 'textures/cubemap/' );
+			loader.setPath( 'textures/studio/' );
 
 			var textureCube = loader.load( [
 				/*'totality_bk.png', 'totality_ft.png', 
 				'totality_dn.png', 'totality_up.png', 
 				'totality_lf.png', 'totality_rt.png',*/
 
-				'posx.png', 'negx.png',
+				/*'posx.png', 'negx.png',
 				'posy.png', 'negy.png',
-				'posz.png', 'negz.png'
+				'posz.png', 'negz.png'*/
 
-				/*'px.png', 'nx.png',
+				'px.png', 'nx.png',
 				'py.png', 'ny.png',
-				'pz.png', 'nz.png'*/
+				'pz.png', 'nz.png'
 			] );
+
+			var imgl = new THREE.TextureLoader();
+			var textureEnvironment = [
+				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/px.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/nx.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/py.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/ny.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/pz.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/nz.png'), side: THREE.BackSide}),
+			]
 
 			loader.setPath( 'textures/irradiancemap/' );
 			var irradianceMap = loader.load( [
@@ -852,7 +863,7 @@
 			textureCube.minFilter = THREE.LinearMipMapLinearFilter;
 
 			var textureParameters = {
-				normalScale: 0.0,
+				normalScale: 1.0,
 				roughness: 0.2,
 				roughnessmetal: 0.2,
 				roughnessglass: 0.4,
@@ -1158,7 +1169,18 @@
 				);
 				//scene.add(lightMesh3);
 
-				scene.background = textureCube;
+
+				var cubematerial = textureCube;
+				var geom = new THREE.BoxGeometry(30,30,30);
+
+				var cubescene = new THREE.SceneUtils.createMultiMaterialObject(
+					geom,
+					cubematerial
+				);
+				cubescene.doubleSided = true;
+
+				//scene.add(cubescene);
+				//scene.background = textureCube;
 				document.addEventListener( 'mousedown', onDocumentMouseDown );
 				controls.update();
 
@@ -1209,7 +1231,7 @@
 						mesh.rotation.z = 60 * 3.14159 / 180;
 						mesh.rotation.x = - 90 * 3.14159 / 180;
 						
-					} else if(mesh.name=='dresser') {
+					} else /*if(mesh.name=='dresser')*/ {
 						mesh.position.x = -7;
 						mesh.position.y = -5;
 						mesh.position.z = -2;
@@ -1222,6 +1244,7 @@
 
 				updateUniforms();
 				updateUniformsChair();
+				updateUniformsLegs();
 				renderer.render(scene, camera);
 			}
 
@@ -1295,37 +1318,26 @@
 			}
 
 			function updateUniformsChair() {
-				uniformsChair.cdiff.value = new THREE.Vector3(
-					cdiff.red,
-					cdiff.green,
-					cdiff.blue
-				);
-				uniformsChair.cspec.value = new THREE.Vector3(
-					cspec.red,
-					cspec.green,
-					cspec.blue
-				);
-
 				uniformsChairMetal.cdiff.value = new THREE.Vector3(
-					cdiff.red,
-					cdiff.green,
-					cdiff.blue
+					cdiffmetal.red,
+					cdiffmetal.green,
+					cdiffmetal.blue
 				);
 				uniformsChairMetal.cspec.value = new THREE.Vector3(
-					cspec.red,
-					cspec.green,
-					cspec.blue
+					cspecmetal.red,
+					cspecmetal.green,
+					cspecmetal.blue
 				);
 
 				uniformsChairGlass.cdiff.value = new THREE.Vector3(
-					cdiff.red,
-					cdiff.green,
-					cdiff.blue
+					cdiffglass.red,
+					cdiffglass.green,
+					cdiffglass.blue
 				);
 				uniformsChairGlass.cspec.value = new THREE.Vector3(
-					cspec.red,
-					cspec.green,
-					cspec.blue
+					cspecglass.red,
+					cspecglass.green,
+					cspecglass.blue
 				);
 
 				uniformsChair.clight.value = new THREE.Vector3(
@@ -1369,42 +1381,31 @@
 					textureParameters.normalScale 
 				);
 
-				uniformsChairMetal.roughness.value = textureParameters.roughness;
-				uniformsChairGlass.roughness.value = textureParameters.roughness;
+				uniformsChairMetal.roughness.value = textureParameters.roughnessmetal;
+				uniformsChairGlass.roughness.value = textureParameters.roughnessglass;
 			}
 
 			function updateUniformsLegs() {
-				uniformsLegs.cdiff.value = new THREE.Vector3(
-					cdiff.red,
-					cdiff.green,
-					cdiff.blue
-				);
-				uniformsLegs.cspec.value = new THREE.Vector3(
-					cspec.red,
-					cspec.green,
-					cspec.blue
-				);
-
 				uniformsLegsMetal.cdiff.value = new THREE.Vector3(
-					cdiff.red,
-					cdiff.green,
-					cdiff.blue
+					cdiffmetal.red,
+					cdiffmetal.green,
+					cdiffmetal.blue
 				);
 				uniformsLegsMetal.cspec.value = new THREE.Vector3(
-					cspec.red,
-					cspec.green,
-					cspec.blue
+					cspecmetal.red,
+					cspecmetal.green,
+					cspecmetal.blue
 				);
 
 				uniformsLegsGlass.cdiff.value = new THREE.Vector3(
-					cdiff.red,
-					cdiff.green,
-					cdiff.blue
+					cdiffglass.red,
+					cdiffglass.green,
+					cdiffglass.blue
 				);
 				uniformsLegsGlass.cspec.value = new THREE.Vector3(
-					cspec.red,
-					cspec.green,
-					cspec.blue
+					cspecglass.red,
+					cspecglass.green,
+					cspecglass.blue
 				);
 
 				uniformsLegs.clight.value = new THREE.Vector3(
@@ -1448,8 +1449,8 @@
 					textureParameters.normalScale 
 				);
 
-				uniformsLegsMetal.roughness.value = textureParameters.roughness;
-				uniformsLegsGlass.roughness.value = textureParameters.roughness;
+				uniformsLegsMetal.roughness.value = textureParameters.roughnessmetal;
+				uniformsLegsGlass.roughness.value = textureParameters.roughnessglass;
 			}
 
 			function clearGui() {
@@ -1489,7 +1490,7 @@
 							});
 						}
 
-					} else if(selected.parent.name=="dresser") {
+					} else /*if(selected.parent.name=="dresser")*/ {
 						selected.material = new THREE.ShaderMaterial({
 							extensions: materialExtensions,
 							uniforms: uniforms,
@@ -1514,13 +1515,13 @@
 
 			var goldShader = function() {
 				this.gold = function() {
-					/*textureParameters.roughnessmetal = 0.25;
+					textureParameters.roughnessmetal = 0.2;
 					cdiffmetal.red = 0.83;
 					cdiffmetal.green = 0.69;
 					cdiffmetal.blue = 0.22;
 					cspecmetal.red = 1.0;
 					cspecmetal.green = 0.78;
-					cspecmetal.blue = 0.34;*/
+					cspecmetal.blue = 0.34;
 
 					//shaderMaterial.fragmentShader = document.getElementById('fs_gold').textContent;
 
@@ -1542,7 +1543,7 @@
 							vertexShader: document.getElementById('vs').textContent,
 							fragmentShader: document.getElementById('fs_gold').textContent
 						});
-					} else if(selected.parent.name=="dresser") {
+					} else /*if(selected.parent.name=="dresser")*/ {
 						selected.material = new THREE.ShaderMaterial({
 							extensions: materialExtensions,
 							uniforms: uniformsMetal,
@@ -1562,7 +1563,17 @@
 						mesh.children[i].material.dispose();
 					}*/
 				}
-				
+				this.copper = function () {
+					textureParameters.roughnessmetal = 0.2;
+
+					cdiffmetal.red = 0.72;
+					cdiffmetal.green = 0.45;
+					cdiffmetal.blue = 0.2;
+
+					cspecmetal.red = 0.955;
+					cspecmetal.green = 0.638;
+					cspecmetal.blue = 0.538;
+				}
 			}
 			var goldMaterial = new goldShader();
 
@@ -1578,13 +1589,32 @@
 					//shaderMaterial.fragmentShader = document.getElementById('fs_refraction').textContent;
 					
 					var selected = scene.getObjectByName(selection);
-					selected.material = new THREE.ShaderMaterial({
-						extensions: materialExtensions,
-						uniforms: uniformsGlass,
-						vertexShader: document.getElementById('vs').textContent,
-						fragmentShader: document.getElementById('fs_refraction').textContent
-					});
-					
+					if(selection == 'Chair_foot') {
+							selected.material = new THREE.ShaderMaterial({
+								extensions: materialExtensions,
+								uniforms: uniformsLegsGlass,
+								vertexShader: document.getElementById('vs').textContent,
+								fragmentShader: document.getElementById('fs_refraction').textContent
+							});
+					} else if (selection == "Chair_back"
+						|| selection == "Chair_button"
+						|| selection == "Chair_metal") {
+
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniformsChairGlass,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_refraction').textContent
+						});
+					} else /*if(selected.parent.name=="dresser")*/ {
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniformsGlass,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_refraction').textContent
+						});
+					}
+
 					scene.remove(selected);
 					selected.geometry.dispose();
 					selected.material.dispose();
@@ -1615,10 +1645,11 @@
 
 				gui.add(woodMaterial, 'material');
 				gui.add(goldMaterial, 'gold');
+				gui.add(goldMaterial,  'copper');
 				gui.add(glassMaterial, 'glass');
 			}
 
-			modelLoader("dresser");
+			modelLoader("bed");
 			modelLoader("bigchair");
 			Start();
 			buildGui();
@@ -1635,20 +1666,23 @@
 
 						mesh = obj;
 						mesh.scale.multiplyScalar( 0.07 );
+						if(name == 'chessKing')
+							mesh.scale.multiplyScalar( 30 );
 						mesh.name = name;
 
 						for (i=0; i<mesh.children.length; i++) {
-							if (name == "dresser") 
-								mesh.children[i].material = shaderMaterial;//new THREE.MeshBasicMaterial({color: 0xff0000});
-							else if (name=='bigchair')
+							if (name=='bigchair') {
 								mesh.children[i].material = shaderMaterialChair;
 
 								if(mesh.children[i].name == 'Chair_foot')
 									mesh.children[i].material = shaderMaterialLegs;
-							
-								objects.push(mesh.children[i]);
+
+							} else {
+								mesh.children[i].material = shaderMaterial;
+							}
+
+							objects.push(mesh.children[i]);
 						}
-						//mesh.children[0].material = new THREE.MeshBasicMaterial({color: 0xff0000});
 
 						loadedModel = true;
 				} );
