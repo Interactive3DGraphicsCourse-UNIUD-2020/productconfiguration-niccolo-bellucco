@@ -1515,6 +1515,35 @@
 					}*/
 
 				}
+				
+				this.brown = function() {
+					diffuseMapChair = textureLoader('textures/bigchair/Lchair.jpg');
+				}
+				this.red = function() {
+					diffuseMapChair = textureLoader('textures/bigchair/Lredchair.jpg');
+				}
+				this.black = function() {
+					diffuseMapChair = textureLoader('textures/bigchair/Lblackchair.jpg');
+				}
+				this.blue = function() {
+					diffuseMapChair = textureLoader('textures/bigchair/Lbluechair.jpg');
+				}
+				this.white = function() {
+					diffuseMapChair = textureLoader('textures/bigchair/Lwhitechair.jpg');
+				}
+
+				this.wood1 = function() {
+					diffuseMap = textureLoader('textures/dresser/wood1.jpg');
+				}
+				this.wood2 = function() {
+					diffuseMap = textureLoader('textures/dresser/wood2.png');
+				}
+				this.wood3 = function() {
+					diffuseMap = textureLoader('textures/dresser/wood3.png');
+				}
+				this.wood4 = function() {
+					diffuseMap = textureLoader('textures/dresser/diffuse.png');
+				}
 			}
 			var woodMaterial = new woodShader();
 
@@ -1649,6 +1678,19 @@
 				mt.add(cdiffmetal,'blue').min(0).max(1);
 
 				gui.add(woodMaterial, 'material');
+				var leather = gui.addFolder('leather color');
+				leather.add(woodMaterial, 'brown');
+				leather.add(woodMaterial, 'red');
+				leather.add(woodMaterial, 'blue');
+				leather.add(woodMaterial, 'black');
+				leather.add(woodMaterial, 'white');
+
+				var wood = gui.addFolder('wood type');
+				wood.add(woodMaterial, 'wood1');
+				wood.add(woodMaterial, 'wood2');
+				wood.add(woodMaterial, 'wood3');
+				wood.add(woodMaterial, 'wood4');
+
 				gui.add(goldMaterial, 'gold');
 				gui.add(goldMaterial,  'copper');
 				gui.add(glassMaterial, 'glass');
