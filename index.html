@@ -756,7 +756,7 @@
 		<script>
 			var scene, camera, renderer, stats, controls, gui;
 			var lightMesh, lightMesh2, lightMesh3;
-			var textureCube;
+			var textureCube, cubescene, geom;
 			var objects = new Array();
 			var shaderMaterial, mesh;
 			var shaderMaterialChair;
@@ -827,7 +827,7 @@
 			var roughnessMapLegs = textureLoader('textures/bigchair/Wrough.png');
 
 			var loader = new THREE.CubeTextureLoader();
-			loader.setPath( 'textures/studio/' );
+			loader.setPath( 'textures/lounge/' );
 
 			var textureCube = loader.load( [
 				/*'totality_bk.png', 'totality_ft.png', 
@@ -842,25 +842,28 @@
 				'py.png', 'ny.png',
 				'pz.png', 'nz.png'
 			] );
+			textureCube.minFilter = THREE.LinearMipMapLinearFilter;
 
 			var imgl = new THREE.TextureLoader();
+
+			var path = 'textures/lounge/'
 			var textureEnvironment = [
-				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/px.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/nx.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/py.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/ny.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/pz.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load('textures/studio/nz.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load(path+'px.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load(path+'nx.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load(path+'py.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load(path+'ny.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load(path+'pz.png'), side: THREE.BackSide}),
+				new THREE.MeshBasicMaterial({map: imgl.load(path+'nz.png'), side: THREE.BackSide}),
 			]
+
+			var spheretexture = imgl.load(path+'lounge.png');
 
 			loader.setPath( 'textures/irradiancemap/' );
 			var irradianceMap = loader.load( [
 					'posx.png', 'negx.png',
 					'posy.png', 'negy.png',
 					'posz.png', 'negz.png'
-			] );
-
-			textureCube.minFilter = THREE.LinearMipMapLinearFilter;
+			] );			
 
 			var textureParameters = {
 				normalScale: 1.0,
@@ -1139,6 +1142,15 @@
 				stats.domElement.style.top = '0px';
 				document.body.appendChild( stats.domElement );
 
+				cubescene = new THREE.Mesh(
+					new THREE.SphereBufferGeometry(40, 64, 64),
+					new THREE.MeshBasicMaterial({map:spheretexture, side: THREE.BackSide})
+				);
+				cubescene.position.set(0, 25, 0);
+				cubescene.doubleSided = true;
+				cubescene.receiveShadow = true;
+				scene.add(cubescene);
+
 				lightMesh = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
 					new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
 				lightMesh.position.set( 7.0, 7.0, 7.0 );
@@ -1147,6 +1159,7 @@
 					lightMesh.position.y,
 					lightMesh.position.z
 				);
+				lightMesh.castShadow = true;
 				scene.add(lightMesh);
 
 				lightMesh2 = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
@@ -1169,17 +1182,6 @@
 				);
 				//scene.add(lightMesh3);
 
-
-				var cubematerial = textureCube;
-				var geom = new THREE.BoxGeometry(30,30,30);
-
-				var cubescene = new THREE.SceneUtils.createMultiMaterialObject(
-					geom,
-					cubematerial
-				);
-				cubescene.doubleSided = true;
-
-				//scene.add(cubescene);
 				//scene.background = textureCube;
 				document.addEventListener( 'mousedown', onDocumentMouseDown );
 				controls.update();
@@ -1221,6 +1223,7 @@
 			}
 
 			function Render() {
+
 				if(loadedModel) {
 
 					if(mesh.name=='bigchair') {
@@ -1238,8 +1241,10 @@
 
 						mesh.rotation.y = 45 * 3.14159 / 180;
 					}
-
+					
 					scene.add(mesh);
+
+					
 				}
 
 				updateUniforms();
@@ -1649,7 +1654,7 @@
 				gui.add(glassMaterial, 'glass');
 			}
 
-			modelLoader("bed");
+			modelLoader("dresser");
 			modelLoader("bigchair");
 			Start();
 			buildGui();
@@ -1668,6 +1673,7 @@
 						mesh.scale.multiplyScalar( 0.07 );
 						if(name == 'chessKing')
 							mesh.scale.multiplyScalar( 30 );
+
 						mesh.name = name;
 
 						for (i=0; i<mesh.children.length; i++) {
@@ -1681,6 +1687,8 @@
 								mesh.children[i].material = shaderMaterial;
 							}
 
+							mesh.children[i].castShadow = true;
+							mesh.children[i].receiveShadow = true;
 							objects.push(mesh.children[i]);
 						}
 
