@@ -1,11 +1,11 @@
 <html>
 	<head>
 		<title>Lambertian BRDF Shaders</title>
-		
 		<style>
 			canvas { width: 100%; height: 100%; }
 			body{ margin: 0; }
 		</style>
+		<link rel="stylesheet" type="text/css" href="style.css">
 	</head>
 	<body>
 		<script src="libs\three.min.js"></script>
@@ -759,10 +759,13 @@
 			var lightMesh, lightMesh2, lightMesh3;
 			var textureCube, cubescene, geom;
 			var objects = new Array();
+			var raycaster =  new THREE.Raycaster();                                        
 			var shaderMaterial, mesh;
 			var shaderMaterialChair, shaderMaterialLegs, shaderMaterialCass;
 			var material = 'fs_wood';
 			selection = '';
+
+			var guiSelector;
 
 			var loadedModel = false;
 
@@ -848,14 +851,14 @@
 			var imgl = new THREE.TextureLoader();
 
 			var path = 'textures/lounge/'
-			/*var textureEnvironment = [
+			var textureEnvironment = [
 				new THREE.MeshBasicMaterial({map: imgl.load(path+'px.png'), side: THREE.BackSide}),
 				new THREE.MeshBasicMaterial({map: imgl.load(path+'nx.png'), side: THREE.BackSide}),
 				new THREE.MeshBasicMaterial({map: imgl.load(path+'py.png'), side: THREE.BackSide}),
 				new THREE.MeshBasicMaterial({map: imgl.load(path+'ny.png'), side: THREE.BackSide}),
 				new THREE.MeshBasicMaterial({map: imgl.load(path+'pz.png'), side: THREE.BackSide}),
 				new THREE.MeshBasicMaterial({map: imgl.load(path+'nz.png'), side: THREE.BackSide}),
-			];*/
+			];
 
 			var spheretexture = imgl.load(path+'lounge.png');
 
@@ -1104,6 +1107,15 @@
 				fragmentShader: document.getElementById('fs_wood').textContent
 			});
 
+			function selectFunction(name) {
+				selection = name;
+				scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
+					color: 0xff0000,
+					transparent: true,
+					opacity: 0.3
+				});
+			}
+
 			function Start() {
 				
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -1122,17 +1134,18 @@
 
 				document.body.appendChild( renderer.domElement );
 				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( window.innerWidth * 0.8, window.innerHeight * 0.8 );
 
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';
 				document.body.appendChild( stats.domElement );
 
 				cubescene = new THREE.Mesh(
-					new THREE.SphereBufferGeometry(40, 64, 64),
-					new THREE.MeshBasicMaterial({map:spheretexture, side: THREE.BackSide})
+					new THREE.BoxBufferGeometry(50, 50, 50),
+					//new THREE.MeshBasicMaterial({map:spheretexture, side: THREE.BackSide})
+					textureEnvironment
 				);
-				cubescene.position.set(0, 25, 0);
+				cubescene.position.set(0, 20, 0);
 				cubescene.doubleSided = true;
 				scene.add(cubescene);
 
@@ -1144,8 +1157,7 @@
 					lightMesh.position.y,
 					lightMesh.position.z
 				);
-				lightMesh.castShadow = true;
-				scene.add(lightMesh);
+				//scene.add(lightMesh);
 
 				/*lightMesh2 = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
 				new THREE.MeshBasicMaterial ({color: 0xff0000, wireframe:true}));
@@ -1168,17 +1180,18 @@
 				//scene.add(lightMesh3);
 
 				//scene.background = textureCube;
+
 				document.addEventListener( 'mousedown', onDocumentMouseDown );
 				controls.update();
 
 			}
 
 			function onDocumentMouseDown( event ) {    
-				event.preventDefault();
+				//event.preventDefault();
 				var mouse3D = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1,   
 					-( event.clientY / window.innerHeight ) * 2 + 1,  
 					0.5 );     
-				var raycaster =  new THREE.Raycaster();                                        
+				
 				raycaster.setFromCamera( mouse3D, camera );
 				var intersects = raycaster.intersectObjects( objects);
 				
@@ -1192,6 +1205,8 @@
 						opacity: 0.3
 					});
 					
+				} else {
+					console.log(selection);
 				}
 			}
 
@@ -1481,9 +1496,9 @@
 						}
 					}
 
-					scene.remove(selected);
-					selected.geometry.dispose();
-					selected.material.dispose();
+					//scene.remove(selected);
+					//selected.geometry.dispose();
+					//selected.material.dispose();
 
 					/*for(i=0; i<mesh.children.length; i++) {
 						scene.remove(mesh.children[i]);
@@ -1504,9 +1519,10 @@
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lchair.jpg');
-						scene.remove(selected);
-						selected.geometry.dispose();
-						selected.material.dispose();
+						
+						//scene.remove(selected);
+						//selected.geometry.dispose();
+						//selected.material.dispose();
 					}
 				}
 				this.red = function() {
@@ -1520,9 +1536,9 @@
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lredchair.jpg');
-						scene.remove(selected);
-						selected.geometry.dispose();
-						selected.material.dispose();
+						//scene.remove(selected);
+						//selected.geometry.dispose();
+						//selected.material.dispose();
 					}
 				}
 				this.black = function() {
@@ -1536,9 +1552,9 @@
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lblackchair.jpg');
-						scene.remove(selected);
-						selected.geometry.dispose();
-						selected.material.dispose();
+						//scene.remove(selected);
+						//selected.geometry.dispose();
+						//selected.material.dispose();
 					}
 				}
 				this.blue = function() {
@@ -1552,9 +1568,9 @@
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lbluechair.jpg');
-						scene.remove(selected);
-						selected.geometry.dispose();
-						selected.material.dispose();
+						//scene.remove(selected);
+						//selected.geometry.dispose();
+						//selected.material.dispose();
 					}
 				}
 				this.white = function() {
@@ -1568,15 +1584,13 @@
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lwhitechair.jpg');
-						scene.remove(selected);
-						selected.geometry.dispose();
-						selected.material.dispose();
+						//scene.remove(selected);
+						//selected.geometry.dispose();
+						//selected.material.dispose();
 					}
 				}
 
 				this.wood4 = function() {
-					/*diffuseMap = textureLoader('textures/dresser/wood1.jpg');
-					diffuseMapLegs = textureLoader('textures/dresser/wood1.jpg');*/
 					var selected = scene.getObjectByName(selection);
 
 					if (selected.parent.name == "dresser") {
@@ -1598,13 +1612,11 @@
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood1.jpg');
 					}
 
-					scene.remove(selected);
-					selected.geometry.dispose();
-					selected.material.dispose();
+					//scene.remove(selected);
+					//selected.geometry.dispose();
+					//selected.material.dispose();
 				}
 				this.wood2 = function() {
-					/*diffuseMap = textureLoader('textures/dresser/wood2.png');
-					diffuseMapLegs = textureLoader('textures/dresser/wood2.png');*/
 					var selected = scene.getObjectByName(selection);
 					if (selected.parent.name == "dresser") {
 						selected.material = new THREE.ShaderMaterial({
@@ -1625,13 +1637,11 @@
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood2.png');
 					}
 
-					scene.remove(selected);
-					selected.geometry.dispose();
-					selected.material.dispose();
+					//scene.remove(selected);
+					//selected.geometry.dispose();
+					//selected.material.dispose();
 				}
 				this.wood3 = function() {
-					/*diffuseMap = textureLoader('textures/dresser/wood3.jpg');
-					diffuseMapLegs = textureLoader('textures/dresser/wood3.jpg');*/
 					var selected = scene.getObjectByName(selection);
 					if (selected.parent.name == "dresser") {
 						selected.material = new THREE.ShaderMaterial({
@@ -1652,14 +1662,11 @@
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood3.jpg');
 					}
 
-					scene.remove(selected);
-					selected.geometry.dispose();
-					selected.material.dispose();
+					//scene.remove(selected);
+					//selected.geometry.dispose();
+					//selected.material.dispose();
 				}
 				this.wood1 = function() {
-					
-					/*diffuseMap = textureLoader('textures/dresser/diffuse.png');
-					diffuseMapLegs = textureLoader('textures/bigchair/Wchair.jpg');*/
 					var selected = scene.getObjectByName(selection);
 					if (selected.parent.name == "dresser") {
 						selected.material = new THREE.ShaderMaterial({
@@ -1680,9 +1687,9 @@
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/diffuse.png');
 					}
 
-					scene.remove(selected);
-					selected.geometry.dispose();
-					selected.material.dispose();
+					//scene.remove(selected);
+					//selected.geometry.dispose();
+					//selected.material.dispose();
 				}
 			}
 			var woodMaterial = new woodShader();
@@ -1726,9 +1733,9 @@
 						});
 					}
 
-					scene.remove(selected);
-					selected.geometry.dispose();
-					selected.material.dispose();
+					//scene.remove(selected);
+					//selected.geometry.dispose();
+					//selected.material.dispose();
 
 					/*
 					for(i=0; i<mesh.children.length; i++) {
@@ -1789,9 +1796,9 @@
 						});
 					}
 
-					scene.remove(selected);
-					selected.geometry.dispose();
-					selected.material.dispose();
+					//scene.remove(selected);
+					//selected.geometry.dispose();
+					//selected.material.dispose();
 
 					/*for(i=0; i<mesh.children.length; i++) {
 						scene.remove(mesh.children[i]);
@@ -1892,5 +1899,17 @@
 			}
 
 		</script>
+
+		<br/>
+		<div style='text-align: center;'>
+			<button class='dropbtn' onclick='console.log(selection);'>
+				Select
+			</button>
+			<select>
+
+				<option value='chair'>chair</option>
+				<option value='dresser'>dresser</option>
+			</select>
+		</div>
 	</body> 
 </html>
