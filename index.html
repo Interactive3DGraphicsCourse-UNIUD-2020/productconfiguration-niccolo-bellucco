@@ -760,8 +760,8 @@
 			var textureCube, cubescene, geom;
 			var objects = new Array();
 			var raycaster =  new THREE.Raycaster();                                        
-			var shaderMaterial, mesh;
-			var shaderMaterialChair, shaderMaterialLegs, shaderMaterialCass;
+			var mesh;
+			
 			var material = 'fs_wood';
 			selection = '';
 
@@ -823,7 +823,7 @@
 			var normalMapChair = textureLoader('textures/bigchair/Lnormal.png');
 			var diffuseMapChair = textureLoader('textures/bigchair/Lchair.jpg');
 			var roughnessMapChair = textureLoader('textures/bigchair/Lrough.jpg');
-			var specularMapChair = textureLoader('textures/bigchair/Lspec.jpg');
+			var specularMapChair = textureLoader('textures/bigchair/Lspec2.jpg');
 
 			var normalMapLegs = textureLoader('textures/bigchair/Wnormal.png');
 			var diffuseMapLegs = textureLoader('textures/bigchair/Wchair.jpg');
@@ -1107,15 +1107,6 @@
 				fragmentShader: document.getElementById('fs_wood').textContent
 			});
 
-			function selectFunction(name) {
-				selection = name;
-				scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
-					color: 0xff0000,
-					transparent: true,
-					opacity: 0.3
-				});
-			}
-
 			function Start() {
 				
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -1151,13 +1142,8 @@
 
 				lightMesh = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
 					new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
-				lightMesh.position.set( 7.0, 7.0, 7.0 );
-				uniforms.pointLightPosition.value = new THREE.Vector3(
-					lightMesh.position.x,
-					lightMesh.position.y,
-					lightMesh.position.z
-				);
-				//scene.add(lightMesh);
+				lightMesh.position.set( -2.0, 10.0, 10.0 );
+				scene.add(lightMesh);
 
 				/*lightMesh2 = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
 				new THREE.MeshBasicMaterial ({color: 0xff0000, wireframe:true}));
@@ -1181,12 +1167,12 @@
 
 				//scene.background = textureCube;
 
-				document.addEventListener( 'mousedown', onDocumentMouseDown );
+				//document.addEventListener( 'mousedown', onDocumentMouseDown );
 				controls.update();
 
 			}
 
-			function onDocumentMouseDown( event ) {    
+			/*function onDocumentMouseDown( event ) {    
 				//event.preventDefault();
 				var mouse3D = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1,   
 					-( event.clientY / window.innerHeight ) * 2 + 1,  
@@ -1208,7 +1194,7 @@
 				} else {
 					console.log(selection);
 				}
-			}
+			}*/
 
 			function Update(time) {
 				time *= 0.001;
@@ -1247,11 +1233,22 @@
 			}
 
 			function updateUniforms() {
+				uniforms.pointLightPosition.value = new THREE.Vector3(
+					lightMesh.position.x,
+					lightMesh.position.y,
+					lightMesh.position.z
+				);
+				uniformsMetal.pointLightPosition.value = new THREE.Vector3(
+					lightMesh.position.x,
+					lightMesh.position.y,
+					lightMesh.position.z
+				);
+
 				uniformsMetal.cdiff.value = new THREE.Vector3(
 					cdiffmetal.red,
 					cdiffmetal.green,
 					cdiffmetal.blue
-				)
+				);
 				/*uniformsGlass.cdiff.value = new THREE.Vector3(
 					cdiffglass.red,
 					cdiffglass.green,
@@ -1316,6 +1313,17 @@
 			}
 
 			function updateUniformsChair() {
+				uniformsChair.pointLightPosition.value = new THREE.Vector3(
+					lightMesh.position.x,
+					lightMesh.position.y,
+					lightMesh.position.z
+				);
+				uniformsChairMetal.pointLightPosition.value = new THREE.Vector3(
+					lightMesh.position.x,
+					lightMesh.position.y,
+					lightMesh.position.z
+				);
+
 				uniformsChairMetal.cdiff.value = new THREE.Vector3(
 					cdiffmetal.red,
 					cdiffmetal.green,
@@ -1384,6 +1392,17 @@
 			}
 
 			function updateUniformsLegs() {
+				uniformsLegs.pointLightPosition.value = new THREE.Vector3(
+					lightMesh.position.x,
+					lightMesh.position.y,
+					lightMesh.position.z
+				);
+				uniformsLegsMetal.pointLightPosition.value = new THREE.Vector3(
+					lightMesh.position.x,
+					lightMesh.position.y,
+					lightMesh.position.z
+				);
+
 				uniformsLegsMetal.cdiff.value = new THREE.Vector3(
 					cdiffmetal.red,
 					cdiffmetal.green,
@@ -1714,13 +1733,42 @@
 								vertexShader: document.getElementById('vs').textContent,
 								fragmentShader: document.getElementById('fs_gold').textContent
 							});
-					} else if (selection == "Chair_back"
-						|| selection == "Chair_button"
-						|| selection == "Chair_metal") {
-
+					} else if (selection == "Chair_back") {
 						selected.material = new THREE.ShaderMaterial({
 							extensions: materialExtensions,
 							uniforms: uniformsChairMetal,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_gold').textContent
+						});
+					} else if(selection == "buttons") {
+						selected = scene.getObjectByName("Chair_button");
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniformsChairMetal,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_gold').textContent
+						});
+
+						selected = scene.getObjectByName("Chair_metal");
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniformsChairMetal,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_gold').textContent
+						});
+					} else if(selection=='legs') {
+						selected = scene.getObjectByName("Low c_low");
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniformsMetal,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_gold').textContent
+						});
+
+						selected = scene.getObjectByName("Low e_low");
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniformsMetal,
 							vertexShader: document.getElementById('vs').textContent,
 							fragmentShader: document.getElementById('fs_gold').textContent
 						});
@@ -1813,18 +1861,13 @@
 			function buildGui() {
 				clearGui();
 
-				gui.add(textureParameters,'normalScale').min(-3).max(3)
-				//gui.add(textureParameters,'roughnessmetal').min(0).max(1);
-
-				//var gl = gui.addFolder('glass params');
-				//gl.add(textureParameters,'roughnessglass').min(0).max(1);
+				gui.add(textureParameters,'normalScale').min(-3).max(3);
 
 				var mt = gui.addFolder('metal params');
 				mt.add(cdiffmetal,'red').min(0).max(1);
 				mt.add(cdiffmetal,'green').min(0).max(1);
 				mt.add(cdiffmetal,'blue').min(0).max(1);
 
-				//gui.add(woodMaterial, 'material');
 				var leather = gui.addFolder('leather color');
 				leather.add(woodMaterial, 'brown');
 				leather.add(woodMaterial, 'red');
@@ -1840,7 +1883,6 @@
 
 				gui.add(goldMaterial, 'gold');
 				gui.add(goldMaterial,  'copper');
-				//gui.add(glassMaterial, 'glass');
 			}
 
 			modelLoader("dresser");
@@ -1867,13 +1909,28 @@
 
 						for (i=0; i<mesh.children.length; i++) {
 							if (name=='bigchair') {
-								mesh.children[i].material = shaderMaterialChair;
+								mesh.children[i].material = new THREE.ShaderMaterial({
+									extensions: materialExtensions,
+									uniforms: uniformsChair,
+									vertexShader: document.getElementById('vs').textContent,
+									fragmentShader: document.getElementById('fs_wood').textContent
+								});
 
 								if(mesh.children[i].name == 'Chair_foot')
-									mesh.children[i].material = shaderMaterialLegs;
+									mesh.children[i].material = new THREE.ShaderMaterial({
+										extensions: materialExtensions,
+										uniforms: uniformsLegs,
+										vertexShader: document.getElementById('vs').textContent,
+										fragmentShader: document.getElementById('fs_wood').textContent
+									});
 
 							} else if (name=='dresser') {
-								mesh.children[i].material = shaderMaterial;
+								mesh.children[i].material = new THREE.ShaderMaterial({
+									extensions: materialExtensions,
+									uniforms: uniforms,
+									vertexShader: document.getElementById('vs').textContent,
+									fragmentShader: document.getElementById('fs_wood').textContent
+								});
 							}
 
 							/*mesh.children[i].castShadow = true;
@@ -1898,18 +1955,107 @@
 				return texture;
 			}
 
+			function selectFunction(name) {
+				selection = name;
+				if(name=='buttons') {
+					scene.getObjectByName("Chair_metal").material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+
+					scene.getObjectByName("Chair_button").material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+				} else if(name=='legs') {
+					scene.getObjectByName("Low c_low").material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+
+					scene.getObjectByName("Low e_low").material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+				} else {
+					scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+				}
+				console.log(selection);
+			}
+
+			function applyFunction(name) {
+				switch(name) {
+					case 'red':
+						woodMaterial.red();
+						break;
+					case 'black': 
+						woodMaterial.black();
+						break;
+					case 'brown': 
+						woodMaterial.brown();
+						break;
+					case 'blue': 
+						woodMaterial.blue();
+						break;
+					case 'white': 
+						woodMaterial.white();
+						break;
+					case 'cherry': 
+						woodMaterial.wood4();
+						break;
+					case 'betulla': 
+						woodMaterial.wood2();
+						break;
+					case 'normalwood': 
+						woodMaterial.wood1();
+						break;
+					case 'faggio': 
+						woodMaterial.wood3();
+						break;
+				}
+			}
+
 		</script>
 
 		<br/>
 		<div style='text-align: center;'>
-			<button class='dropbtn' onclick='console.log(selection);'>
-				Select
-			</button>
-			<select>
-
-				<option value='chair'>chair</option>
-				<option value='dresser'>dresser</option>
+			
+			<select id='selector'>
+				<option value='Chair_back'>Poltrona - seduta</option>
+				<option value='buttons'>Poltrona - bottoni</option>
+				<option value='Chair_foot'>Poltrona - gambe</option>
+				<option value='a_low Low'>Cassettiera - cassetti</option>
+				<option value='Low d_low'>Cassettiera - pomelli</option>
+				<option value='legs'>Cassettiera - gambe</option>
+				<option value='Low b_low'>Cassettiera - struttura</option>
 			</select>
+			<button class='dropbtn' 
+				onclick='selectFunction(document.getElementById("selector").value);'>
+				Seleziona
+			</button>
+			<select id='applier'>
+				<option value='red'>Pelle - rosso</option>
+				<option value='brown'>Pelle - marrone</option>
+				<option value='black'>Pelle - nero</option>
+				<option value='white'>Pelle - bianco</option>
+				<option value='blue'>Pelle - blue</option>
+				<option value='cherry'>Legno - ciliegio</option>
+				<option value='faggio'>Legno - faggio</option>
+				<option value='betulla'>Legno - betulla</option>
+				<option value='normalwood'>Legno - compensato</option>
+			</select>
+			<button class='dropbtn' 
+				onclick='applyFunction(document.getElementById("applier").value);'>
+				Seleziona
+			</button>
 		</div>
 	</body> 
 </html>
