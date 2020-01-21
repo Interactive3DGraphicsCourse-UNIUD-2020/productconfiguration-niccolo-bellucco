@@ -3,7 +3,7 @@
 		<title>Lambertian BRDF Shaders</title>
 		<style>
 			canvas { width: 100%; height: 100%; }
-			body{ margin: 0; }
+			body{ margin: 0; background-color: #000a12; }
 		</style>
 		<link rel="stylesheet" type="text/css" href="style.css">
 	</head>
@@ -772,8 +772,8 @@
 			var lightParameters = {
 				red: 1.0,
 				green: 1.0,
-				blue: 1.0,
-				intensity: 1.0,
+				blue: 0.9,
+				intensity: 0.6,
 			};
 
 			var cdiff = {
@@ -831,7 +831,7 @@
 			var roughnessMapLegs = textureLoader('textures/bigchair/Wrough.png');
 
 			var loader = new THREE.CubeTextureLoader();
-			loader.setPath( 'textures/lounge/' );
+			loader.setPath( 'textures/vetrata/' );
 
 			var textureCube = loader.load( [
 				/*'totality_bk.png', 'totality_ft.png', 
@@ -842,15 +842,15 @@
 				'posy.png', 'negy.png',
 				'posz.png', 'negz.png'*/
 
-				'px.png', 'nx.png',
+				'pz.png', 'nz.png',
 				'py.png', 'ny.png',
-				'pz.png', 'nz.png'
+				'px.png', 'nx.png'
 			] );
 			textureCube.minFilter = THREE.LinearMipMapLinearFilter;
 
 			var imgl = new THREE.TextureLoader();
 
-			var path = 'textures/lounge/'
+			var path = 'textures/vetrata/'
 			var textureEnvironment = [
 				new THREE.MeshBasicMaterial({map: imgl.load(path+'px.png'), side: THREE.BackSide}),
 				new THREE.MeshBasicMaterial({map: imgl.load(path+'nx.png'), side: THREE.BackSide}),
@@ -864,9 +864,12 @@
 
 			loader.setPath( 'textures/irradiancemap/' );
 			var irradianceMap = loader.load( [
-					'posx.png', 'negx.png',
+					'pz.png', 'nz.png',
+					'py.png', 'ny.png',
+					'nx.png', 'px.png'
+					/*'posx.png', 'negx.png',
 					'posy.png', 'negy.png',
-					'posz.png', 'negz.png'
+					'posz.png', 'negz.png'*/
 			] );
 
 			var textureParameters = {
@@ -877,6 +880,11 @@
 				repeatS: 1.0,
 				repeatT: 1.0,
 				textureMap: ''
+			}
+
+			var rotationParameters = {
+				chairZ: 0.0,
+				dresserZ: 55.0
 			}
 
 			var uniforms = {
@@ -1120,7 +1128,7 @@
 
 				renderer.setClearColor( 0xf0f0f0 );
 
-				camera.position.set( 6, 10, 35 );
+				camera.position.set( 20, 30, 60 );
 				scene.add( camera );
 
 				document.body.appendChild( renderer.domElement );
@@ -1132,29 +1140,32 @@
 				document.body.appendChild( stats.domElement );
 
 				cubescene = new THREE.Mesh(
-					new THREE.BoxBufferGeometry(50, 50, 50),
+					new THREE.BoxBufferGeometry(80, 80, 80),
 					//new THREE.MeshBasicMaterial({map:spheretexture, side: THREE.BackSide})
 					textureEnvironment
 				);
 				cubescene.position.set(0, 20, 0);
+				cubescene.rotation.y = -150 * 3.13159 / 180;
 				cubescene.doubleSided = true;
 				scene.add(cubescene);
 
-				lightMesh = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
+				lightMesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 3, 8, 8),
 					new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
-				lightMesh.position.set( -2.0, 10.0, 10.0 );
+				lightMesh.position.set( -20, 30, 40 );
 				scene.add(lightMesh);
 
-				/*lightMesh2 = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
-				new THREE.MeshBasicMaterial ({color: 0xff0000, wireframe:true}));
-				lightMesh2.position.set( -7.0, 7.0, 7.0 );
+				/*
+				lightMesh2 = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
+				new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
+				lightMesh2.position.set( -10, 30, 40 );
 				uniforms.pointLightPosition2.value = new THREE.Vector3(
 					lightMesh2.position.x,
 					lightMesh2.position.y,
 					lightMesh2.position.z
 				);
-				//scene.add(lightMesh2);
-				
+				scene.add(lightMesh2);
+				*/
+				/*
 				lightMesh3 = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
 				new THREE.MeshBasicMaterial ({color: 0x0000ff, wireframe:true}));
 				lightMesh3.position.set( 7.0, -3.0, -7.0 );
@@ -1206,24 +1217,27 @@
 			function Render() {
 
 				if(loadedModel) {
+					scene.add(mesh);
 
-					if(mesh.name=='bigchair') {
-						mesh.position.x = 6;
-						mesh.position.y = -5;
-						mesh.position.z = 3;
-
-						mesh.rotation.z = 60 * 3.14159 / 180;
-						mesh.rotation.x = - 90 * 3.14159 / 180;
+					for(i=0; i<scene.children.length; i++) {
 						
-					} else if(mesh.name=='dresser') {
-						mesh.position.x = -7;
-						mesh.position.y = -5;
-						mesh.position.z = -2;
+						if(scene.children[i].name == 'bigchair'){
+							mesh.position.x = 15;
+							mesh.position.y = -20;
+							mesh.position.z = -10;
 
-						mesh.rotation.y = 45 * 3.14159 / 180;
+							mesh.rotation.z = 60 * 3.14159 / 180;
+							mesh.rotation.x = - 90 * 3.14159 / 180;
+							scene.children[i].rotateOnWorldAxis(new THREE.Vector3(0,1,0), rotationParameters.chairZ * 3.14159 /180 );
+						
+						} else if(scene.children[i].name == 'dresser') {
+							mesh.position.x = -30;
+							mesh.position.y = -20;
+							mesh.position.z = -15;
+							scene.children[i].rotation.y = rotationParameters.dresserZ * 3.14159 / 180;
+						}
 					}
 					
-					scene.add(mesh);
 				}
 
 				updateUniforms();
@@ -1862,6 +1876,9 @@
 				clearGui();
 
 				gui.add(textureParameters,'normalScale').min(-3).max(3);
+				gui.add(lightParameters, 'intensity').min(0).max(1);
+				gui.add(rotationParameters,'chairZ').min(0).max(360);
+				gui.add(rotationParameters,'dresserZ').min(0).max(360);
 
 				var mt = gui.addFolder('metal params');
 				mt.add(cdiffmetal,'red').min(0).max(1);
@@ -1901,9 +1918,7 @@
 						shaderMaterial.needsUpdate = true;
 
 						mesh = obj;
-						mesh.scale.multiplyScalar( 0.07 );
-						if(name == 'chessKing')
-							mesh.scale.multiplyScalar( 30 );
+						mesh.scale.multiplyScalar( 0.2 );
 
 						mesh.name = name;
 
@@ -2026,6 +2041,7 @@
 		</script>
 
 		<br/>
+
 		<div style='text-align: center;'>
 			
 			<select id='selector'>
