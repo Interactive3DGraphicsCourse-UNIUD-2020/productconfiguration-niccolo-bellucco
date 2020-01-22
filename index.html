@@ -11,6 +11,7 @@
 		<script src="libs\three.min.js"></script>
 		<script src="libs\stats.min.js"></script>
 		<script src="libs\OrbitControls.js"></script>
+		<script src="libs\Coordinates.js"></script>
 		<script src='libs\OBJLoader.js'></script>
 		<script src='libs\GLTFLoader.js'></script>
 		<script src='libs\dat.gui.min.js'></script>
@@ -39,221 +40,6 @@
 				vUv = uv;
 				wNormal = (modelViewMatrix * vec4(vNormal, 0.0)).xyz;
 				gl_Position = projectionMatrix * vPos;
-			}
-		</script>
-
-		<script type='text/x-glsl' id='fs'>
-			precision highp float;
-			precision highp int;
-
-			varying vec3 vPosition;
-			varying vec3 wPosition;
-			varying vec3 vNormal;
-			varying vec3 wNormal;
-			varying vec2 vUv;
-			
-			//per modello gltf
-			varying vec3 vTangent;
-			varying vec3 vBitangent;
-
-			uniform vec3 pointLightPosition;
-			uniform vec3 pointLightPosition2;
-			uniform vec3 pointLightPosition3;
-			//uniform vec3 pointLightPosition4;
-
-			uniform vec3 clight;
-			uniform samplerCube envMap;
-
-			//uniform 
-			vec3 cdiff;
-			uniform sampler2D diffuseMap;
-
-			uniform vec3 cspec;
-			//uniform sampler2D specularMap;
-
-			uniform float roughness;
-			//uniform sampler2D roughnessMap;
-
-			uniform sampler2D normalMap;
-			uniform vec2 normalScale;
-
-			uniform samplerCube irradianceMap;
-			uniform vec2 textureRepeat;
-			const float PI = 3.14159;
-
-			#define saturate(a) clamp( a, 0.0, 1.0 )
-
-			float pow2( const in float x ) { return x*x; }
-
-			float getSpecularMIPLevel( const in float blinnShininessExponent, const in int maxMIPLevel ) {
-				float maxMIPLevelScalar = float( maxMIPLevel );
-				float desiredMIPLevel = maxMIPLevelScalar - 0.79248 - 0.5 * log2( pow2( blinnShininessExponent ) + 1.0 );
-				return clamp( desiredMIPLevel, 0.0, maxMIPLevelScalar );
-			}
-
-			float GGXRoughnessToBlinnExponent( const in float ggxRoughness ) {
-				return ( 2.0 / pow2( ggxRoughness + 0.0001 ) - 2.0 );
-			}
-
-			vec3 FSchlick(float lDoth) {
-				return (cspec + (vec3(1.0)-cspec)*pow(1.0 - lDoth,5.0));
-			}
-
-			float DGGX(float nDoth, float alpha) {
-				float alpha2 = alpha*alpha;
-				float d = nDoth*nDoth*(alpha2-1.0)+1.0;
-				return (  alpha2 / (PI*d*d));
-			}
-
-			float G1(float dotProduct, float k) {
-				return (dotProduct / (dotProduct*(1.0-k) + k) );
-			}
-
-			float GSmith(float nDotv, float nDotl) {
-				float k = roughness*roughness;
-				return G1(nDotl,k)*G1(nDotv,k);
-			}
-
-			vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm ) {
-				vec3 q0 = dFdx( eye_pos.xyz );
-				vec3 q1 = dFdy( eye_pos.xyz );
-				vec2 st0 = dFdx( vUv.st );
-				vec2 st1 = dFdy( vUv.st );
-
-				vec3 S = normalize(  q0 * st1.t - q1 * st0.t );
-				vec3 T = normalize( -q0 * st1.s + q1 * st0.s );
-				vec3 N =  surf_norm ;
-
-				vec3 mapN = normalize(texture2D( normalMap, vUv ).xyz * 2.0 - 1.0);
-				mapN.xy = normalScale * mapN.xy;
-				mat3 tsn = mat3( S, T, N );
-				return normalize( tsn * mapN );
-			}
-
-			vec3 inverseTransformDirection( in vec3 dir, in mat4 matrix ) {
-				return normalize( ( vec4( dir, 0.0 ) * matrix ).xyz );
-			}
-
-			vec3 BRDF_Specular_GGX_Environment( vec3 normal, vec3 viewDir, const in vec3 cspec, const in float roughness ) {
-				float dotNV = saturate( dot( normal, viewDir ) );
-				const vec4 c0 = vec4( - 1, - 0.0275, - 0.572, 0.022 );
-				const vec4 c1 = vec4( 1, 0.0425, 1.04, - 0.04 );
-				vec4 r = roughness * c0 + c1;
-				float a004 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
-				vec2 AB = vec2( -1.04, 1.04 ) * a004 + r.zw;
-				return cspec * AB.x + AB.y;
-			}
-
-			void main() {
-
-				vec4 lPosition = viewMatrix * vec4( pointLightPosition, 1.0 );
-				vec4 lPosition2 = viewMatrix * vec4( pointLightPosition2, 1.0 );
-				vec4 lPosition3 = viewMatrix * vec4( pointLightPosition3, 1.0 );
-				//vec4 lPosition4 = viewMatrix * vec4( pointLightPosition4, 1.0 );
-
-				vec3 l = normalize(lPosition.xyz - vPosition.xyz);
-				vec3 l2 = normalize(lPosition2.xyz - vPosition.xyz);
-				vec3 l3 = normalize(lPosition3.xyz - vPosition.xyz);
-				//vec3 l4 = normalize(lPosition4.xyz - vPosition.xyz);
-
-				//GLTF MODEL
-				/*
-				vec3 normal = normalize(vNormal);
-				vec3 tangent = normalize(vTangent);
-				vec3 bitangent = normalize(vBitangent);
-				mat3 vTBN = mat3(tangent, bitangent, normal);
-				vec3 mapN = texture2D(normalMap, vUv).xyz * 2.0 - 1.0;
-				mapN.xy = normalScale * mapN.xy;
-				vec3 n = normalize(vTBN*mapN);
-				vec3 worldV = cameraPosition - wPosition ;
-				vec3 r = normalize( reflect(-worldV,worldN));
-				*/
-
-				//OBJ MODEL
-				//TOM AKE NORMAL MAP WORK perturbNormal2Arb(...)
-				vec3 n = perturbNormal2Arb( vPosition, normalize( vNormal ));
-				vec3 worldN = inverseTransformDirection( n, viewMatrix );
-				vec3 v = normalize( -vPosition);
-				vec3 vReflect = reflect(vPosition, n);
-				vec3 r = inverseTransformDirection(vReflect, viewMatrix);
-
-				vec3 h = normalize( v + l);
-				vec3 h2 = normalize( v + l2);
-				vec3 h3 = normalize( v + l3);
-				//vec3 h4 = normalize( v + l4);
-
-				float nDotl = max(dot( n, l ),0.000001);
-				float nDotl2 = max(dot( n, l2 ),0.000001);
-				float nDotl3 = max(dot( n, l3 ),0.000001);
-				//float nDotl4 = max(dot( n, l4 ),0.000001);
-
-				float lDoth = max(dot( l, h ),0.000001);
-				float lDoth2 = max(dot( l2, h2 ),0.000001);
-				float lDoth3 = max(dot( l3, h3 ),0.000001);
-				//float lDoth4 = max(dot( l4, h4 ),0.000001);
-
-				float nDoth = max(dot( n, h ),0.000001);
-				float nDoth2 = max(dot( n, h2 ),0.000001);
-				float nDoth3 = max(dot( n, h3 ),0.000001);
-				//float nDoth4 = max(dot( n, h4 ),0.000001);
-
-				float vDoth = max(dot( v, h ),0.000001);
-				float vDoth2 = max(dot( v, h2 ),0.000001);
-				float vDoth3 = max(dot( v, h3 ),0.000001);
-				//float vDoth4 = max(dot( v, h4 ),0.000001);
-
-				float nDotv = max(dot( n, v ),0.000001);
-
-				//WITH TEXTURES INSTEAD OF VALUES
-				//DIFFUSION
-				cdiff = texture2D( diffuseMap, vUv*textureRepeat ).rgb;
-				cdiff = pow( cdiff, vec3(2.2));
-				//SPECULAR
-				//cspec = texture2D(specularMap, vUv*textureRepeat).rgb;
-				//cspec = pow(cspec, vec3(2.2));
-				//ROUGHNESS
-				//roughness = texture2D(roughnessMap, vUv*textureRepeat).r;
-
-				vec3 fresnel = FSchlick( nDotv );
-
-				vec3 BRDF = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/(4.0*nDotl*nDotv);
-				vec3 BRDF2 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl2)*DGGX(nDoth2,roughness*roughness)/(4.0*nDotl2*nDotv);
-				vec3 BRDF3 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl3)*DGGX(nDoth3,roughness*roughness)/(4.0*nDotl3*nDotv);
-				//vec3 BRDF4 = (vec3(1.0)-fresnel4)*cdiff/PI + fresnel4*GSmith(nDotv,nDotl4)*DGGX(nDoth4,roughness*roughness)/(4.0*nDotl4*nDotv);
-
-				//SPECULAR + ROUGHNESS
-				float blinnShininessExponent = GGXRoughnessToBlinnExponent(roughness);
-				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent, 8 );
-				vec3 envLight = textureCubeLodEXT( envMap, vec3(-r.x, r.yz), specularMIPLevel ).rgb;
-				//SPECULAR
-				//vec3 envLight = textureCube(envMap, vec3(-r.x, r.yz)).rgb;
-
-				//REFRACTIVE SHADER
-				vec3 I = wPosition.xyz - cameraPosition;
-				vec3 refractedDirection = refract(I, wNormal, 0.4);
-				//vec3 envLight = textureCubeLodEXT(envMap, vec3( -refractedDirection.x, refractedDirection.yz ), specularMIPLevel).rgb;
-				
-				//linearize from sRGB
-				//envLight = pow( envLight, vec3(2.2));
-
-				//SPECULAR + ROUGHNESS
-				//CON LUCE AMBIENTALE
-				vec3 outRadiance = envLight*fresnel*BRDF_Specular_GGX_Environment(n, v, cspec, roughness);
-				//CON LUCE ILLUMINAZIONE
-				//vec3 outRadiance = envLight*fresnel*((BRDF2*nDotl2)+(BRDF3*nDotl3));
-
-				//SPECULAR
-				//CON RIFRAZIONE
-				//vec3 outRadiance = envLight*fresnel;
-
-				//MATERIAL
-				//vec3 outRadiance = PI * clight * ((nDotl*BRDF)+(nDotl2*BRDF2)+(nDotl3*BRDF3));
-
-				outRadiance *= cdiff;
-
-				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
-
-				
 			}
 		</script>
 
@@ -422,7 +208,7 @@
 				//MATERIAL
 				//vec3 outRadiance = clight*PI * nDotl*(sBRDF);
 				//vec3 outRadiance = clight*PI*BRDF*nDotl + envLight*fresnel*sBRDF;
-				vec3 outRadiance = BRDF*nDotl*clight*PI + irradiance*cdiff;
+				vec3 outRadiance = ((BRDF*nDotl)+(nDotl2*BRDF2))*clight;
 
 				//outRadiance *= cdiff;
 
@@ -431,175 +217,6 @@
 				
 			}
 		</script>
-
-		<!--<script type='text/x-glsl' id='fs_refraction'>
-			precision highp float; 
-			precision highp int;
-
-			varying vec3 vPosition;
-			varying vec3 wPosition;
-
-			uniform vec3 pointLightPosition;
-			uniform vec3 pointLightPosition2;
-			uniform vec3 pointLightPosition3;
-
-			varying vec3 vNormal;
-			varying vec3 wNormal;
-			varying vec2 vUv;
-
-			uniform vec3 clight;
-			uniform samplerCube envMap;
-
-			vec3 cdiff;
-			uniform vec3 cspec;
-			uniform float roughness;
-
-			uniform sampler2D normalMap;
-			uniform vec2 normalScale;
-
-			uniform float mBias;
-			uniform float mPower;
-			uniform float mScale;
-			float vReflectionFactor;
-
-			const float PI = 3.14159;
-
-			#define saturate(a) clamp( a, 0.0, 1.0 )
-
-			float pow2( const in float x ) { return x*x; }
-
-			float getSpecularMIPLevel( const in float blinnShininessExponent, const in int maxMIPLevel ) {
-				float maxMIPLevelScalar = float( maxMIPLevel );
-				float desiredMIPLevel = maxMIPLevelScalar - 0.79248 - 0.5 * log2( pow2( blinnShininessExponent ) + 1.0 );
-				return clamp( desiredMIPLevel, 0.0, maxMIPLevelScalar );
-			}
-
-			float GGXRoughnessToBlinnExponent( const in float ggxRoughness ) {
-				return ( 2.0 / pow2( ggxRoughness + 0.0001 ) - 2.0 );
-			}
-
-			float DGGX(float nDoth, float alpha) {
-				float alpha2 = alpha*alpha;
-				float d = nDoth*nDoth*(alpha2-1.0)+1.0;
-				return (  alpha2 / (PI*d*d));
-			}
-
-			float G1(float dotProduct, float k) {
-				return (dotProduct / (dotProduct*(1.0-k) + k) );
-			}
-
-			float GSmith(float nDotv, float nDotl) {
-				float k = roughness*roughness;
-				return G1(nDotl,k)*G1(nDotv,k);
-			}
-
-			vec3 FSchlick(float lDoth) {
-				return (cspec + (vec3(1.0)-cspec)*pow(1.0 - lDoth,5.0));
-			}
-
-			vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm ) {
-				vec3 q0 = dFdx( eye_pos.xyz );
-				vec3 q1 = dFdy( eye_pos.xyz );
-				vec2 st0 = dFdx( vUv.st );
-				vec2 st1 = dFdy( vUv.st );
-
-				vec3 S = normalize(  q0 * st1.t - q1 * st0.t );
-				vec3 T = normalize( -q0 * st1.s + q1 * st0.s );
-				vec3 N =  surf_norm ;
-
-				vec3 mapN = normalize(texture2D( normalMap, vUv ).xyz * 2.0 - 1.0);
-				mapN.xy = normalScale * mapN.xy;
-				mat3 tsn = mat3( S, T, N );
-				return normalize( tsn * mapN );
-			}
-
-			vec3 inverseTransformDirection( in vec3 dir, in mat4 matrix ) {
-				return normalize( ( vec4( dir, 0.0 ) * matrix ).xyz );
-			}
-
-			vec3 BRDF_Specular_GGX_Environment( vec3 normal, vec3 viewDir, const in vec3 cspec, const in float roughness ) {
-				float dotNV = saturate( dot( normal, viewDir ) );
-				const vec4 c0 = vec4( - 1, - 0.0275, - 0.572, 0.022 );
-				const vec4 c1 = vec4( 1, 0.0425, 1.04, - 0.04 );
-				vec4 r = roughness * c0 + c1;
-				float a004 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
-				vec2 AB = vec2( -1.04, 1.04 ) * a004 + r.zw;
-				return cspec * AB.x + AB.y;
-			}
-
-			void main() {
-				vec4 lPosition = viewMatrix * vec4( pointLightPosition, 1.0 );
-				vec4 lPosition2 = viewMatrix * vec4( pointLightPosition2, 1.0 );
-				vec4 lPosition3 = viewMatrix * vec4( pointLightPosition3, 1.0 );
-
-				vec3 l = normalize(lPosition.xyz - vPosition.xyz);
-				vec3 l2 = normalize(lPosition2.xyz - vPosition.xyz);
-				vec3 l3 = normalize(lPosition3.xyz - vPosition.xyz);
-
-				//OBJ MODEL
-				//TO MAKE NORMAL MAP WORK perturbNormal2Arb(...)
-				vec3 n = perturbNormal2Arb( vPosition, normalize( vNormal ));
-				vec3 worldN = inverseTransformDirection( n, viewMatrix );
-				vec3 v = normalize( -vPosition);
-				vec3 vReflect = reflect(vPosition, n);
-				vec3 r = inverseTransformDirection(vReflect, viewMatrix);
-
-				vec3 h = normalize( v + l);
-				vec3 h2 = normalize( v + l2);
-				vec3 h3 = normalize( v + l3);
-
-				float nDotl = max(dot( n, l ),0.000001);
-				float nDotl2 = max(dot( n, l2 ),0.000001);
-				float nDotl3 = max(dot( n, l3 ),0.000001);
-
-				float lDoth = max(dot( l, h ),0.000001);
-				float lDoth2 = max(dot( l2, h2 ),0.000001);
-				float lDoth3 = max(dot( l3, h3 ),0.000001);
-
-				float nDoth = max(dot( n, h ),0.000001);
-				float nDoth2 = max(dot( n, h2 ),0.000001);
-				float nDoth3 = max(dot( n, h3 ),0.000001);
-
-				float vDoth = max(dot( v, h ),0.000001);
-				float vDoth2 = max(dot( v, h2 ),0.000001);
-				float vDoth3 = max(dot( v, h3 ),0.000001);
-
-				float nDotv = max(dot( n, v ),0.000001);
-
-				vec3 fresnel = FSchlick( nDotv );
-
-				vec3 BRDF = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/(4.0*nDotl*nDotv);
-				vec3 BRDF2 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl2)*DGGX(nDoth2,roughness*roughness)/(4.0*nDotl2*nDotv);
-				vec3 BRDF3 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl3)*DGGX(nDoth3,roughness*roughness)/(4.0*nDotl3*nDotv);
-
-				vec3 sBRDF = BRDF_Specular_GGX_Environment(n, v, cspec, roughness);
-
-				//SPECULAR + ROUGHNESS
-				float blinnShininessExponent = GGXRoughnessToBlinnExponent(roughness);
-				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent, 8 );
-
-				//REFRACTIVE SHADER with opacity
-				vec3 I = wPosition.xyz - cameraPosition;
-				vec3 refractedDirection = refract(I, wNormal, 0.4);
-				//vec3 envLight = textureCube(envMap, vec3( -refractedDirection.x, refractedDirection.yz ), specularMIPLevel).rgb;
-				vec3 specLight = textureCubeLodEXT(envMap, vec3( -refractedDirection.x, refractedDirection.yz ), specularMIPLevel).rgb;
-				vec3 envLight = textureCubeLodEXT(envMap, vec3( -r.x, r.yz ), specularMIPLevel).rgb;
-
-				//linearize from sRGB
-				specLight = pow( specLight, vec3(2.2));
-				envLight = pow( envLight, vec3(2.2));
-
-				vReflectionFactor = mBias + mScale * pow( 1.0 + dot( normalize( I ), wNormal ), mPower );
-
-				//vec3 outRadiance = envLight*fresnel * (sBRDF + nDotl*BRDF);
-				vec3 outRadiance = mix( envLight, specLight, clamp(vReflectionFactor, 0.0, 1.0)) * (sBRDF+BRDF);
-				//envLight*fresnel +sBRDF*BRDF;
-				//ADD COLOR
-				//outRadiance *= cdiff;
-
-				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
-			}
-		</script>-->
 
 		<script type='text/x-glsl' id='fs_gold' >
 			precision highp float; 
@@ -772,7 +389,7 @@
 			var lightParameters = {
 				red: 1.0,
 				green: 1.0,
-				blue: 0.9,
+				blue: 0.5,
 				intensity: 0.6,
 			};
 
@@ -788,12 +405,6 @@
 				blue: 1.0,
 			}
 
-			/*var cdiffglass = {
-				red: 1.0,
-				green: 1.0,
-				blue: 1.0,
-			};*/
-
 			var cspec = {
 				red: 1.0,
 				green: 1.0,
@@ -807,13 +418,6 @@
 				blue: 0.34,
 				roughness: 0.2
 			};
-
-			/*var cspecglass = {
-				red: 1.0,
-				green: 1.0,
-				blue: 1.0,
-				roughness: 0.5
-			};*/
 
 			var normalMap = textureLoader('textures/dresser/normal.png');
 			var diffuseMap = textureLoader('textures/dresser/diffuse.png');
@@ -876,7 +480,6 @@
 				normalScale: 2.0,
 				roughness: 0.2,
 				roughnessmetal: 0.2,
-				//roughnessglass: 0.4,
 				repeatS: 1.0,
 				repeatT: 1.0,
 				textureMap: ''
@@ -929,32 +532,6 @@
 				clight:	{ type: "v3", value: new THREE.Vector3() },
 			};
 			
-			
-			/*var uniformsGlass = {
-				mBias: { type: 'f', value: 0.1 },
-				mPower: { type: 'f', value: 2.0 },
-				mScale: { type: 'f', value: 1.0 },
-
-				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				roughness: { type: "f", value: 0.5 },
-				
-				normalMap:	{ type: "t", value: normalMap },
-				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				irradianceMap:	{ type: "t", value: irradianceMap},
-
-				textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				envMap: { type: "t", value: textureCube },
-
-				pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
-				pointLightPosition2: { type: "v3", value: new THREE.Vector3() },
-				pointLightPosition3: { type: "v3", value: new THREE.Vector3() },
-
-				clight:	{ type: "v3", value: new THREE.Vector3() },
-			};*/
-
 			var uniformsChair = {
 				diffuseMap: { type: "t", value: diffuseMapChair },
 				roughnessMap: { type: "t", value: roughnessMapChair },
@@ -996,31 +573,6 @@
 
 				clight:	{ type: "v3", value: new THREE.Vector3() },
 			};
-
-			/*var uniformsChairGlass = {
-				mBias: { type: 'f', value: 0.1 },
-				mPower: { type: 'f', value: 2.0 },
-				mScale: { type: 'f', value: 1.0 },
-
-				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				roughness: { type: "f", value: 0.5 },
-				
-				normalMap:	{ type: "t", value: normalMapChair },
-				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				irradianceMap:	{ type: "t", value: irradianceMap},
-
-				textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				envMap: { type: "t", value: textureCube },
-
-				pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
-				pointLightPosition2: { type: "v3", value: new THREE.Vector3() },
-				pointLightPosition3: { type: "v3", value: new THREE.Vector3() },
-
-				clight:	{ type: "v3", value: new THREE.Vector3() },
-			};*/
 
 			var uniformsLegs = {
 				diffuseMap: { type: "t", value: diffuseMapLegs },
@@ -1064,56 +616,10 @@
 				clight:	{ type: "v3", value: new THREE.Vector3() },
 			};
 
-			/*var uniformsLegsGlass = {
-				mBias: { type: 'f', value: 0.1 },
-				mPower: { type: 'f', value: 2.0 },
-				mScale: { type: 'f', value: 1.0 },
-
-				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				roughness: { type: "f", value: 0.5 },
-				
-				normalMap:	{ type: "t", value: normalMapLegs },
-				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				irradianceMap:	{ type: "t", value: irradianceMap},
-
-				textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				envMap: { type: "t", value: textureCube },
-
-				pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
-				pointLightPosition2: { type: "v3", value: new THREE.Vector3() },
-				pointLightPosition3: { type: "v3", value: new THREE.Vector3() },
-
-				clight:	{ type: "v3", value: new THREE.Vector3() },
-			};*/
-
 			materialExtensions = {
 				derivatives: true,
 				shaderTextureLOD: true
 			};
-
-			shaderMaterial = new THREE.ShaderMaterial({
-				extensions: materialExtensions,
-				uniforms: uniforms,
-				vertexShader: document.getElementById('vs').textContent,
-				fragmentShader: document.getElementById('fs_wood').textContent
-			});
-
-			shaderMaterialChair = new THREE.ShaderMaterial({
-				extensions: materialExtensions,
-				uniforms: uniformsChair,
-				vertexShader: document.getElementById('vs').textContent,
-				fragmentShader: document.getElementById('fs_wood').textContent
-			});
-
-			shaderMaterialLegs = new THREE.ShaderMaterial({
-				extensions: materialExtensions,
-				uniforms: uniformsLegs,
-				vertexShader: document.getElementById('vs').textContent,
-				fragmentShader: document.getElementById('fs_wood').textContent
-			});
 
 			function Start() {
 				
@@ -1121,7 +627,7 @@
 				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 1000 );
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
 				scene = new THREE.Scene();
-
+				Coordinates.drawAllAxes();
 				stats = new Stats();
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';
@@ -1151,32 +657,50 @@
 				cubescene.rotation.y = -150 * 3.13159 / 180;
 				cubescene.doubleSided = true;
 				cubescene.receiveShadow = true;
+				cubescene.castShadow = false;
 				scene.add(cubescene);
 
-				lightMesh = new THREE.PointLight(0xffffff, 1, 150);
-				// new THREE.Mesh( new THREE.SphereBufferGeometry( 3, 8, 8),
-					//new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
-				lightMesh.position.set( -20, 30, 40 );
+				lightMesh = new THREE.PointLight(0xffffa0, 1, 150);
+				var sp = new THREE.Mesh( 
+					new THREE.SphereBufferGeometry( 2, 8, 8),
+					new THREE.MeshBasicMaterial ({color: 0xff0000, wireframe:true})
+				);
+				
+				lightMesh.add(sp);
+				lightMesh.position.set( -23, 57, 20 );
 				lightMesh.castShadow = true;
-				lightMesh.shadow.camera.near = 8;
-				lightMesh.shadow.camera.far = 30;
-				lightMesh.shadow.mapSize.width = 1024; // shadow map resolution
-				lightMesh.shadow.mapSize.height = 1024;
+				lightMesh.shadow.radius = 6;
+				lightMesh.shadow.mapSize.width = 512; 
+				lightMesh.shadow.mapSize.height = 512;
 				lightMesh.shadow.bias = 0.0001;
 				
+				uniforms.pointLightPosition.value = new THREE.Vector3(
+					lightMesh.position.x,
+					lightMesh.position.y,
+					lightMesh.position.z
+				);
 				scene.add(lightMesh);
 
-				/*
-				lightMesh2 = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
-				new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
-				lightMesh2.position.set( -10, 30, 40 );
+				lightMesh2 = new THREE.PointLight(0xffffa0, 1, 200);
+				var sp2 = new THREE.Mesh( 
+					new THREE.SphereBufferGeometry( 2,8,8),
+					new THREE.MeshBasicMaterial ({color: 0x00ff00, wireframe:true})
+				);
+				lightMesh2.position.set( 0, 57, -10 );
+				lightMesh2.add(sp2);
+				lightMesh2.castShadow = true;
+				lightMesh2.shadow.radius = 6;
+				lightMesh2.shadow.mapSize.width = 512; 
+				lightMesh2.shadow.mapSize.height = 512;
+				lightMesh2.shadow.bias = 0.0001;
+
 				uniforms.pointLightPosition2.value = new THREE.Vector3(
 					lightMesh2.position.x,
 					lightMesh2.position.y,
 					lightMesh2.position.z
 				);
 				scene.add(lightMesh2);
-				*/
+
 				/*
 				lightMesh3 = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
 				new THREE.MeshBasicMaterial ({color: 0x0000ff, wireframe:true}));
@@ -1503,55 +1027,6 @@
 			}
 
 			var woodShader = function() {
-				/*this.material = function() {
-					var selected = scene.getObjectByName(selection);
-
-					if (selected.parent.name == "bigchair") {
-						selected.material = new THREE.ShaderMaterial({
-							extensions: materialExtensions,
-							uniforms: uniformsChair,
-							vertexShader: document.getElementById('vs').textContent,
-							fragmentShader: document.getElementById('fs_wood').textContent
-						});
-
-						if(selection == 'Chair_foot') {
-							selected.material = new THREE.ShaderMaterial({
-								extensions: materialExtensions,
-								uniforms: uniformsLegs,
-								vertexShader: document.getElementById('vs').textContent,
-								fragmentShader: document.getElementById('fs_wood').textContent
-							});
-						}
-
-					} else if(selected.parent == 'dresser') {
-						selected.material = new THREE.ShaderMaterial({
-							extensions: materialExtensions,
-							uniforms: uniforms,
-							vertexShader: document.getElementById('vs').textContent,
-							fragmentShader: document.getElementById('fs_wood').textContent
-						});
-					
-						if (selection == 'a_low Low') {
-							selected.material = new THREE.ShaderMaterial({
-								extensions: materialExtensions,
-								uniforms: uniformsLegs,
-								vertexShader: document.getElementById('vs').textContent,
-								fragmentShader: document.getElementById('fs_wood').textContent
-							});
-						}
-					}
-
-					//scene.remove(selected);
-					//selected.geometry.dispose();
-					//selected.material.dispose();
-
-					/*for(i=0; i<mesh.children.length; i++) {
-						scene.remove(mesh.children[i]);
-						mesh.children[i].geometry.dispose();
-						mesh.children[i].material.dispose();
-					}
-
-				}*/
 				
 				this.brown = function() {
 					var selected = scene.getObjectByName(selection);
@@ -1565,9 +1040,9 @@
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lchair.jpg');
 						
-						//scene.remove(selected);
-						//selected.geometry.dispose();
-						//selected.material.dispose();
+						scene.remove(selected);
+						selected.geometry.dispose();
+						selected.material.dispose();
 					}
 				}
 				this.red = function() {
@@ -1581,9 +1056,10 @@
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lredchair.jpg');
-						//scene.remove(selected);
-						//selected.geometry.dispose();
-						//selected.material.dispose();
+						
+						scene.remove(selected);
+						selected.geometry.dispose();
+						selected.material.dispose();
 					}
 				}
 				this.black = function() {
@@ -1597,9 +1073,10 @@
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lblackchair.jpg');
-						//scene.remove(selected);
-						//selected.geometry.dispose();
-						//selected.material.dispose();
+						
+						scene.remove(selected);
+						selected.geometry.dispose();
+						selected.material.dispose();
 					}
 				}
 				this.blue = function() {
@@ -1613,9 +1090,10 @@
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lbluechair.jpg');
-						//scene.remove(selected);
-						//selected.geometry.dispose();
-						//selected.material.dispose();
+						
+						scene.remove(selected);
+						selected.geometry.dispose();
+						selected.material.dispose();
 					}
 				}
 				this.white = function() {
@@ -1629,9 +1107,10 @@
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/bigchair/Lwhitechair.jpg');
-						//scene.remove(selected);
-						//selected.geometry.dispose();
-						//selected.material.dispose();
+						
+						scene.remove(selected);
+						selected.geometry.dispose();
+						selected.material.dispose();
 					}
 				}
 
@@ -1657,9 +1136,9 @@
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood1.jpg');
 					}
 
-					//scene.remove(selected);
-					//selected.geometry.dispose();
-					//selected.material.dispose();
+					scene.remove(selected);
+					selected.geometry.dispose();
+					selected.material.dispose();
 				}
 				this.wood2 = function() {
 					var selected = scene.getObjectByName(selection);
@@ -1682,9 +1161,9 @@
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood2.png');
 					}
 
-					//scene.remove(selected);
-					//selected.geometry.dispose();
-					//selected.material.dispose();
+					scene.remove(selected);
+					selected.geometry.dispose();
+					selected.material.dispose();
 				}
 				this.wood3 = function() {
 					var selected = scene.getObjectByName(selection);
@@ -1707,9 +1186,9 @@
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood3.jpg');
 					}
 
-					//scene.remove(selected);
-					//selected.geometry.dispose();
-					//selected.material.dispose();
+					scene.remove(selected);
+					selected.geometry.dispose();
+					selected.material.dispose();
 				}
 				this.wood1 = function() {
 					var selected = scene.getObjectByName(selection);
@@ -1732,9 +1211,9 @@
 						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/diffuse.png');
 					}
 
-					//scene.remove(selected);
-					//selected.geometry.dispose();
-					//selected.material.dispose();
+					scene.remove(selected);
+					selected.geometry.dispose();
+					selected.material.dispose();
 				}
 			}
 			var woodMaterial = new woodShader();
@@ -1748,8 +1227,6 @@
 					cspecmetal.red = 1.0;
 					cspecmetal.green = 0.78;
 					cspecmetal.blue = 0.34;
-
-					//shaderMaterial.fragmentShader = document.getElementById('fs_gold').textContent;
 
 					var selected = scene.getObjectByName(selection);
 					if(selection == 'Chair_foot') {
@@ -1832,58 +1309,6 @@
 			}
 			var goldMaterial = new goldShader();
 
-			/*var glassShader = function() {
-				this.glass = function() {
-					/*textureParameters.roughnessglass = 0.3;
-					cdiffglass.red = 1.0;
-					cdiffglass.blue = 1.0;
-					cdiffglass.green = 1.0;
-					cspecglass.red = 0.8;
-					cspecglass.green = 0.8;
-					cspecglass.blue = 0.8;
-					//shaderMaterial.fragmentShader = document.getElementById('fs_refraction').textContent;
-					
-					var selected = scene.getObjectByName(selection);
-					if(selection == 'Chair_foot') {
-							selected.material = new THREE.ShaderMaterial({
-								extensions: materialExtensions,
-								uniforms: uniformsLegsGlass,
-								vertexShader: document.getElementById('vs').textContent,
-								fragmentShader: document.getElementById('fs_refraction').textContent
-							});
-					} else if (selection == "Chair_back"
-						|| selection == "Chair_button"
-						|| selection == "Chair_metal") {
-
-						selected.material = new THREE.ShaderMaterial({
-							extensions: materialExtensions,
-							uniforms: uniformsChairGlass,
-							vertexShader: document.getElementById('vs').textContent,
-							fragmentShader: document.getElementById('fs_refraction').textContent
-						});
-					} else /*if(selected.parent.name=="dresser") {
-						selected.material = new THREE.ShaderMaterial({
-							extensions: materialExtensions,
-							uniforms: uniformsGlass,
-							vertexShader: document.getElementById('vs').textContent,
-							fragmentShader: document.getElementById('fs_refraction').textContent
-						});
-					}
-
-					//scene.remove(selected);
-					//selected.geometry.dispose();
-					//selected.material.dispose();
-
-					/*for(i=0; i<mesh.children.length; i++) {
-						scene.remove(mesh.children[i]);
-						mesh.children[i].geometry.dispose();
-						mesh.children[i].material.dispose();
-					}
-					
-				}
-			}
-			var glassMaterial = new glassShader();*/
-
 			function buildGui() {
 				clearGui();
 
@@ -1926,16 +1351,11 @@
 
 				var load = loader.load( "models/"+name+".obj", 
 					function ( obj ) {
-						
-						shaderMaterial.needsUpdate = true;
 
 						mesh = obj;
 						mesh.scale.multiplyScalar( 0.2 );
 
 						mesh.name = name;
-
-						mesh.castShadow = true;
-						mesh.receiveShadow = false;
 
 						for (i=0; i<mesh.children.length; i++) {
 							if (name=='bigchair') {
@@ -1963,8 +1383,8 @@
 								});
 							}
 
-							//mesh.children[i].castShadow = true;
-							//mesh.children[i].receiveShadow = false;
+							mesh.children[i].castShadow = true;
+							mesh.children[i].receiveShadow = false;
 							objects.push(mesh.children[i]);
 						}
 
