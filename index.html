@@ -852,15 +852,15 @@
 
 			var path = 'textures/vetrata/'
 			var textureEnvironment = [
-				new THREE.MeshBasicMaterial({map: imgl.load(path+'px.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load(path+'nx.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load(path+'py.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load(path+'ny.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load(path+'pz.png'), side: THREE.BackSide}),
-				new THREE.MeshBasicMaterial({map: imgl.load(path+'nz.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'px.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'nx.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'py.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'ny.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'pz.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'nz.png'), side: THREE.BackSide}),
 			];
 
-			var spheretexture = imgl.load(path+'lounge.png');
+			//var spheretexture = imgl.load(path+'lounge.png');
 
 			loader.setPath( 'textures/irradiancemap/' );
 			var irradianceMap = loader.load( [
@@ -1135,6 +1135,9 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth * 0.8, window.innerHeight * 0.8 );
 
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFShadowMap;
+
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';
 				document.body.appendChild( stats.domElement );
@@ -1147,11 +1150,20 @@
 				cubescene.position.set(0, 20, 0);
 				cubescene.rotation.y = -150 * 3.13159 / 180;
 				cubescene.doubleSided = true;
+				cubescene.receiveShadow = true;
 				scene.add(cubescene);
 
-				lightMesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 3, 8, 8),
-					new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
+				lightMesh = new THREE.PointLight(0xffffff, 1, 150);
+				// new THREE.Mesh( new THREE.SphereBufferGeometry( 3, 8, 8),
+					//new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
 				lightMesh.position.set( -20, 30, 40 );
+				lightMesh.castShadow = true;
+				lightMesh.shadow.camera.near = 8;
+				lightMesh.shadow.camera.far = 30;
+				lightMesh.shadow.mapSize.width = 1024; // shadow map resolution
+				lightMesh.shadow.mapSize.height = 1024;
+				lightMesh.shadow.bias = 0.0001;
+				
 				scene.add(lightMesh);
 
 				/*
@@ -1922,6 +1934,9 @@
 
 						mesh.name = name;
 
+						mesh.castShadow = true;
+						mesh.receiveShadow = false;
+
 						for (i=0; i<mesh.children.length; i++) {
 							if (name=='bigchair') {
 								mesh.children[i].material = new THREE.ShaderMaterial({
@@ -1948,8 +1963,8 @@
 								});
 							}
 
-							/*mesh.children[i].castShadow = true;
-							mesh.children[i].receiveShadow = true;*/
+							//mesh.children[i].castShadow = true;
+							//mesh.children[i].receiveShadow = false;
 							objects.push(mesh.children[i]);
 						}
 
