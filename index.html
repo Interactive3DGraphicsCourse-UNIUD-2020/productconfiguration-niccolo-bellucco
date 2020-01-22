@@ -208,7 +208,7 @@
 				//MATERIAL
 				//vec3 outRadiance = clight*PI * nDotl*(sBRDF);
 				//vec3 outRadiance = clight*PI*BRDF*nDotl + envLight*fresnel*sBRDF;
-				vec3 outRadiance = ((BRDF*nDotl)+(nDotl2*BRDF2))*clight;
+				vec3 outRadiance = ((BRDF*nDotl)+(nDotl2*BRDF2)+(nDotl3*BRDF3))*clight;
 
 				//outRadiance *= cdiff;
 
@@ -390,7 +390,7 @@
 				red: 1.0,
 				green: 1.0,
 				blue: 0.5,
-				intensity: 0.6,
+				intensity: 0.8,
 			};
 
 			var cdiff = {
@@ -660,16 +660,18 @@
 				cubescene.castShadow = false;
 				scene.add(cubescene);
 
-				lightMesh = new THREE.PointLight(0xffffa0, 1, 150);
+				lightMesh = new THREE.PointLight(0xffffa0, 0.8, 300);
 				var sp = new THREE.Mesh( 
 					new THREE.SphereBufferGeometry( 2, 8, 8),
-					new THREE.MeshBasicMaterial ({color: 0xff0000, wireframe:true})
+					new THREE.MeshBasicMaterial ({color: 0xffffa0, wireframe:true})
 				);
 				
 				lightMesh.add(sp);
 				lightMesh.position.set( -23, 57, 20 );
 				lightMesh.castShadow = true;
 				lightMesh.shadow.radius = 6;
+				lightMesh.shadow.near = 8;
+				lightMesh.shadow.far = 30;
 				lightMesh.shadow.mapSize.width = 512; 
 				lightMesh.shadow.mapSize.height = 512;
 				lightMesh.shadow.bias = 0.0001;
@@ -681,19 +683,19 @@
 				);
 				scene.add(lightMesh);
 
-				lightMesh2 = new THREE.PointLight(0xffffa0, 1, 200);
+				lightMesh2 = new THREE.PointLight(0xffffa0, 0.8, 300);
 				var sp2 = new THREE.Mesh( 
 					new THREE.SphereBufferGeometry( 2,8,8),
-					new THREE.MeshBasicMaterial ({color: 0x00ff00, wireframe:true})
+					new THREE.MeshBasicMaterial ({color: 0xffffa0, wireframe:true})
 				);
 				lightMesh2.position.set( 0, 57, -10 );
 				lightMesh2.add(sp2);
-				lightMesh2.castShadow = true;
-				lightMesh2.shadow.radius = 6;
+				//lightMesh2.castShadow = true;
+				/*lightMesh2.shadow.radius = 6;
 				lightMesh2.shadow.mapSize.width = 512; 
 				lightMesh2.shadow.mapSize.height = 512;
 				lightMesh2.shadow.bias = 0.0001;
-
+				*/
 				uniforms.pointLightPosition2.value = new THREE.Vector3(
 					lightMesh2.position.x,
 					lightMesh2.position.y,
@@ -701,16 +703,25 @@
 				);
 				scene.add(lightMesh2);
 
-				/*
-				lightMesh3 = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
-				new THREE.MeshBasicMaterial ({color: 0x0000ff, wireframe:true}));
-				lightMesh3.position.set( 7.0, -3.0, -7.0 );
+				lightMesh3 = new THREE.PointLight(0xffffff, 1, 200);
+				var sp3 = new THREE.Mesh( 
+					new THREE.SphereBufferGeometry(2,8,8),
+					new THREE.MeshBasicMaterial ({color: 0xffffff, wireframe:true})
+				);
+				lightMesh3.position.set( 20, 30, -40 );
+				lightMesh3.add(sp3);
+				lightMesh3.castShadow = true;
+				lightMesh3.shadow.radius = 6;
+				lightMesh3.shadow.mapSize.width = 512; 
+				lightMesh3.shadow.mapSize.height = 512;
+				lightMesh3.shadow.bias = 0.0001;
+
 				uniforms.pointLightPosition3.value = new THREE.Vector3(
 					lightMesh3.position.x,
 					lightMesh3.position.y,
 					lightMesh3.position.z
-				);*/
-				//scene.add(lightMesh3);
+				);
+				scene.add(lightMesh3);
 
 				//scene.background = textureCube;
 
@@ -1124,7 +1135,7 @@
 							vertexShader: document.getElementById('vs').textContent,
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
-						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood1.jpg');
+						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood4.jpg');
 
 					}  else if(selection == 'Chair_foot') {
 						selected.material = new THREE.ShaderMaterial({
@@ -1133,7 +1144,7 @@
 							vertexShader: document.getElementById('vs').textContent,
 							fragmentShader: document.getElementById('fs_wood').textContent
 						});
-						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood1.jpg');
+						selected.material.uniforms.diffuseMap.value = textureLoader('textures/dresser/wood4.jpg');
 					}
 
 					scene.remove(selected);
@@ -1431,13 +1442,30 @@
 						transparent: true,
 						opacity: 0.3
 					});
+				} else if(name=='Chair_back') {
+					scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+					document.getElementById('applier').innerHTML = 
+						'<option value="brown">Brown leather</option>' +
+						'<option value="red">Red leather</option>' +
+						'<option value="blue">Blue leather</option>' +
+						'<option value="white">White leather</option>' +
+						'<option value="black">Black leather</option>' ;
 				} else {
 					scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
 						color: 0xff0000,
 						transparent: true,
 						opacity: 0.3
 					});
-				}
+					document.getElementById('applier').innerHTML =
+						'<option value="wood1">Dark wood</option>' +
+						'<option value="wood2">Hazel wood</option>' +
+						'<option value="wood3">Beech wood</option>' +
+						'<option value="wood4">Cherry wood</option>' ;
+				};
 				console.log(selection);
 			}
 
@@ -1458,17 +1486,17 @@
 					case 'white': 
 						woodMaterial.white();
 						break;
-					case 'cherry': 
-						woodMaterial.wood4();
-						break;
-					case 'betulla': 
-						woodMaterial.wood2();
-						break;
-					case 'normalwood': 
+					case 'wood1': 
 						woodMaterial.wood1();
 						break;
-					case 'faggio': 
+					case 'wood2': 
+						woodMaterial.wood2();
+						break;
+					case 'wood3': 
 						woodMaterial.wood3();
+						break;
+					case 'wood4': 
+						woodMaterial.wood4();
 						break;
 				}
 			}
@@ -1480,28 +1508,20 @@
 		<div style='text-align: center;'>
 			
 			<select id='selector'>
-				<option value='Chair_back'>Poltrona - seduta</option>
-				<option value='buttons'>Poltrona - bottoni</option>
-				<option value='Chair_foot'>Poltrona - gambe</option>
-				<option value='a_low Low'>Cassettiera - cassetti</option>
-				<option value='Low d_low'>Cassettiera - pomelli</option>
-				<option value='legs'>Cassettiera - gambe</option>
-				<option value='Low b_low'>Cassettiera - struttura</option>
+				<option value='Chair_back'>Chair back</option>
+				<option value='buttons'>Chair buttons</option>
+				<option value='Chair_foot'>Chair legs</option>
+				<option value='a_low Low'>Dresser drawers</option>
+				<option value='Low d_low'>Dresser knobs</option>
+				<option value='legs'>Dresser legs</option>
+				<option value='Low b_low'>Dresser structure</option>
 			</select>
 			<button class='dropbtn' 
 				onclick='selectFunction(document.getElementById("selector").value);'>
 				Seleziona
 			</button>
 			<select id='applier'>
-				<option value='red'>Pelle - rosso</option>
-				<option value='brown'>Pelle - marrone</option>
-				<option value='black'>Pelle - nero</option>
-				<option value='white'>Pelle - bianco</option>
-				<option value='blue'>Pelle - blue</option>
-				<option value='cherry'>Legno - ciliegio</option>
-				<option value='faggio'>Legno - faggio</option>
-				<option value='betulla'>Legno - betulla</option>
-				<option value='normalwood'>Legno - compensato</option>
+				<option value='none'>Select a component</option>
 			</select>
 			<button class='dropbtn' 
 				onclick='applyFunction(document.getElementById("applier").value);'>
