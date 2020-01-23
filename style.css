@@ -1,11 +1,13 @@
-.slidecontainer {
-  width: 100%;
+label {
+  color: white; 
+  font-family: Verdana; 
+  font-size: 18px;
 }
 
 .slider {
   -webkit-appearance: none;
   appearance: none;
-  width: 100%;
+  width: 30%;
   height: 25px;
   border-radius: 5px;
   background: lightgray;

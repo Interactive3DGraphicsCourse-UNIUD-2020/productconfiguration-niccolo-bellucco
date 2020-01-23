@@ -381,6 +381,8 @@
 			var raycaster =  new THREE.Raycaster();                                        
 			var mesh;
 			
+			var box2;
+
 			var material = 'fs_wood';
 			selection = '';
 
@@ -500,8 +502,8 @@
 			}
 
 			var rotationParameters = {
-				chairZ: 0.0,
-				dresserZ: 55.0
+				chairR: 0.0,
+				dresserR: 55.0
 			}
 
 			var uniforms = {
@@ -790,29 +792,35 @@
 			function Render() {
 
 				if(loadedModel) {
+
 					scene.add(mesh);
 
 					for(i=0; i<scene.children.length; i++) {
 						
 						if(scene.children[i].name == 'bigchair'){
-							mesh.position.x = 15;
-							mesh.position.y = -20;
-							mesh.position.z = -10;
+							scene.children[i].position.x = 15;
+							scene.children[i].position.y = -20;
+							scene.children[i].position.z = -10;
 
-							mesh.rotation.z = 60 * 3.14159 / 180;
-							mesh.rotation.x = - 90 * 3.14159 / 180;
-							scene.children[i].rotateOnWorldAxis(new THREE.Vector3(0,1,0), rotationParameters.chairZ * 3.14159 /180 );
+							scene.children[i].rotation.z = 60 * 3.14159 / 180;
+							scene.children[i].rotation.x = - 90 * 3.14159 / 180;
+							scene.children[i].rotateOnWorldAxis(new THREE.Vector3(0,1,0), rotationParameters.chairR * 3.14159 /180 );
 						
 						} else if(scene.children[i].name == 'dresser') {
-							mesh.position.x = -30;
-							mesh.position.y = -20;
-							mesh.position.z = -15;
-							scene.children[i].rotation.y = rotationParameters.dresserZ * 3.14159 / 180;
+							scene.children[i].position.set(-25,-20,-7)
+
+							scene.children[i].rotation.x = 0;
+							scene.children[i].rotation.z = 0;
+							scene.children[i].rotation.y = rotationParameters.dresserR * 3.14159 /180;
 						}
 					}
 					
 				}
 
+				document.getElementById('chairR').innerHTML = rotationParameters.chairR.toString().substr(0,5);
+				document.getElementById('dresserR').innerHTML = rotationParameters.dresserR.toString().substr(0,5);
+
+					buildGui();
 				updateUniforms();
 				updateUniformsChair();
 				updateUniformsLegs();
@@ -1256,8 +1264,8 @@
 				gui.add(lightParameters, 'intensity').min(0).max(3);
 				gui.add(lightParameters2, 'intensity').min(0).max(3);
 				gui.add(lightParameters3, 'intensity').min(0).max(3);
-				gui.add(rotationParameters,'chairZ').min(0).max(360);
-				gui.add(rotationParameters,'dresserZ').min(0).max(360);
+				gui.add(rotationParameters,'chairR').min(0).max(360);
+				gui.add(rotationParameters,'dresserR').min(0).max(360);
 
 				/*var mt = gui.addFolder('metal params');
 				mt.add(cdiffmetal,'red').min(0).max(1);
@@ -1282,7 +1290,7 @@
 			}
 
 			modelLoader("dresser");
-			modelLoader("bigchair");
+			//modelLoader("bigchair");
 			Start();
 			buildGui();
 			Update();
@@ -1317,6 +1325,7 @@
 									});
 
 							} else if (name=='dresser') {
+								
 								mesh.children[i].material = new THREE.ShaderMaterial({
 									extensions: materialExtensions,
 									uniforms: uniforms,
@@ -1327,7 +1336,8 @@
 
 							mesh.children[i].castShadow = true;
 							mesh.children[i].receiveShadow = false;
-							objects.push(mesh.children[i]);
+
+							//objects.push(mesh.children[i]);
 						}
 
 						loadedModel = true;
@@ -1456,16 +1466,27 @@
 				}
 			}
 
+			function rotate(event) {
+				if(event.target.id=='rotchair') rotationParameters.chairR = parseFloat(event.target.value);
+				if(event.target.id=='rotdresser') rotationParameters.dresserR = parseFloat(event.target.value);
+			}
+
 		</script>
 
 		<br/>
 
 		<div style='text-align: center;'>
-			<div class='slidecontainer'>
-				<input type='range' min='0' max='360' value='0' class='slider' id='rotchair' />
+			<div>
+				<label>Chair rotation: </label>
+				<input type='range' min='0' max='360' value='0' class="slider" id='rotchair' oninput='rotate(event)' />
+				<label id='chairR'></label>
 				<br/>
-				<input type='range' min='0' max='360' value='0' class='slider' id='rotdresser' />
-			</div>
+			</div><div>
+				<label>Dresser rotation: </label> 
+				<input type='range' min='0' max='360' value='55' class="slider" id='rotdresser' oninput='rotate(event)'/>
+				<label id='dresserR'></label>
+			</di>
+			<br/>
 			<select id='selector'>
 				<option value='Chair_back'>Chair back</option>
 				<option value='buttons'>Chair buttons</option>
@@ -1487,5 +1508,6 @@
 				Seleziona
 			</button>
 		</div>
+
 	</body> 
 </html>
