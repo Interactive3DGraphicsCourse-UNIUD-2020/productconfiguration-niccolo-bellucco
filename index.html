@@ -24,22 +24,27 @@
 						<div style="float: left; width: 40%;"><input type='range' min='0' max='360' value='55' class="slider" id='rotdresser' oninput='rotate(event)'/></div>
 						<div style="float: left; width: 20%;"><label id='dresserR'></label></div>
 					</div>
+					<br/>
+					<br/>
+					<div style="text-align: left; color: white; padding-left: 40px; font-family: Verdana; font-size: 15px;">
+						Select an object
+						<form id='form' onclick='unlockFunction()'>
+							<input type="radio" name="object" value="chair">Chair</input><br/>
+							<input type="radio" name="object" value="dresser">Dresser</input>
+						</form>
+					</div>
 				</div>
 
 				<div id="menu2">
 					<div id='row'>
 						<select id='selector'>
-							<option value='Chair_back'>Chair back</option>
-							<option value='buttons'>Chair buttons</option>
-							<option value='Chair_foot'>Chair legs</option>
-							<option value='a_low Low'>Dresser drawers</option>
-							<option value='Low d_low'>Dresser knobs</option>
-							<option value='legs'>Dresser legs</option>
-							<option value='Low b_low'>Dresser structure</option>
+							<option value='none'>Select an object</option>
 						</select>
 						<button class='dropbtn' 
+							id='selectbutton'
+							disabled
 							onclick='selectFunction(document.getElementById("selector").value);'>
-							Seleziona
+							Select
 						</button>
 						<br/>
 						<select id='applier' disabled>
@@ -49,7 +54,7 @@
 							id='applybutton'
 							disabled
 							onclick='applyFunction(document.getElementById("applier").value);'>
-							Seleziona
+							Select
 						</button>
 					</div>
 				</div>
@@ -871,10 +876,8 @@
 
 				document.getElementById('chairR').innerHTML = rotationParameters.chairR.toString().substr(0,5);
 				document.getElementById('dresserR').innerHTML = rotationParameters.dresserR.toString().substr(0,5);
-
 				
-
-					//buildGui();
+				//buildGui();
 				updateUniforms();
 				updateUniformsChair();
 				updateUniformsLegs();
@@ -1306,6 +1309,25 @@
 				return texture;
 			}
 
+			function unlockFunction() {
+				if(document.getElementsByName('object')[0].checked) {
+					document.getElementById('selector').innerHTML = '<option value="Chair_back">Chair back</option>' +
+						'<option value="buttons">Chair buttons</option>' +
+						'<option value="Chair_foot">Chair legs</option>';
+					document.getElementById('selectbutton').disabled = false;
+					document.getElementById('selector').disabled = false;
+				} else if(document.getElementsByName('object')[1].checked) {
+					document.getElementById('selector').innerHTML = '<option value="a_low Low">Dresser drawers</option>' +
+						'<option value="Low d_low">Dresser knobs</option>' +
+						'<option value="legs">Dresser legs</option>' +
+						'<option value="Low b_low">Dresser structure</option>';
+					document.getElementById('selectbutton').disabled = false;
+					document.getElementById('selector').disabled = false;
+				} else {
+					document.getElementById('selector').innerHTML = '<option value="none">Select an object</option>';
+				}
+			}
+
 			function selectFunction(name) {
 				selection = name;
 				if(name=='a_low Low' || name=='Low b_low') {
@@ -1419,7 +1441,7 @@
 						}
 						else if(selection!='Chair_back' && selection!='buttons') textureMaterial.wood(uniforms, name+'.png');
 						break;
-					case 'wood3': 
+					case 'wood3':
 						if(selection=='Chair_foot') textureMaterial.wood(uniformsLegs, name+'.jpg');
 						else if(selection=='legs') {
 							selection = 'Low e_low';
