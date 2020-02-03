@@ -1,31 +1,17 @@
 label {
-  color: white; 
   font-family: Verdana; 
-  font-size: 18px;
-  padding-left: 20px;
+  font-size: 17px;
+  padding-left: 15px;
 }
 
 body { 
   background-color: #000a12; 
-}
-
-#menu1 {
-  float: left;
-  width: 50%;
-  color: white;
-}
-
-#menu2 {
-  float: right;
-  width: 50%;
   color: white;
 }
 
 #container {
   text-align: center;
   width: 70%;
-  padding-left: 7%;
-  padding-right: 7%;
 }
 
 canvas {

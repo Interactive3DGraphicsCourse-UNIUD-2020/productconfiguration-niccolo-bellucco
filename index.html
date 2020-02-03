@@ -1,43 +1,37 @@
 <html>
 	<head>
 		<title>Product Visualizer</title>
+		
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 		<link rel="stylesheet" type="text/css" href="style.css">
 	</head>
 	<body>
 		<div>
-			<div style="text-align: center;">
-				<div id="container"></div>
-			</div>
+			<div class='row'>
+				<div class='col-sm-8' id="container" ></div>
 			
-			<div style='width: 100%; text-align: center;'>
-
-				<div id="menu1">
+			
+				<div class='col-sm-3' style='margin-left: 20px; margin-top: 20px;'>
 					<div style="text-align: left;">
-						<div style="width: 40%; float: left;"><label>Chair rotation:</label></div>
-						<div style="float: left; width: 40%"><input type='range' min='0' max='360' value='105' class="slider" id='rotchair' oninput='rotate(event)' /></div>
-						<div style="float: left; width: 20%;"><label id='chairR'></label></div>
+						<div ><label style='width: 200px;'>Chair rotation:</label><label id='chairR'></label></div>
+						<div ><input type='range' min='0' max='360' value='105' class="slider" id='rotchair' oninput='rotate(event)' /></div>
 					</div>
 					<br/>
-					<br/>
 					<div style="text-align: left;">
-						<div style="width: 40%; float: left;"><label>Dresser rotation:</label></div>
-						<div style="float: left; width: 40%;"><input type='range' min='0' max='360' value='55' class="slider" id='rotdresser' oninput='rotate(event)'/></div>
-						<div style="float: left; width: 20%;"><label id='dresserR'></label></div>
+						<div ><label style='width: 200px;'>Dresser rotation:</label><label id='dresserR'></label></div>
+						<div ><input type='range' min='0' max='360' value='55' class="slider" id='rotdresser' oninput='rotate(event)'/></div>
 					</div>
-					<br/>
-					<br/>
-					<div style="text-align: left; color: white; padding-left: 40px; font-family: Verdana; font-size: 15px;">
-						Select an object
-						<form id='form' onclick='unlockFunction()'>
-							<input type="radio" name="object" value="chair">Chair</input><br/>
+					<hr/>
+					<div id='row'><div style="text-align: left; font-family: Verdana; font-size: 15px;">
+						<label>Choose an object</label>
+						<form style='padding-left:10px;' id='form' onclick='unlockFunction()'>
+							<input type="radio" name="object" value="chair">Armchair</input><br/>
 							<input type="radio" name="object" value="dresser">Dresser</input>
 						</form>
 					</div>
-				</div>
-
-				<div id="menu2">
-					<div id='row'>
-						<select id='selector'>
+						<select style='width: 200px' id='selector'>
 							<option value='none'>Select an object</option>
 						</select>
 						<button class='dropbtn' 
@@ -46,8 +40,11 @@
 							onclick='selectFunction(document.getElementById("selector").value);'>
 							Select
 						</button>
+						<span style='color:red'>The selected component will be highlighted in red</span>
 						<br/>
-						<select id='applier' disabled>
+						<br/>
+						<label>Customize the material</label>
+						<select style='width: 200px' id='applier' disabled>
 							<option value='none'>Select a component</option>
 						</select>
 						<button class='dropbtn' 
@@ -57,8 +54,8 @@
 							Select
 						</button>
 					</div>
+					
 				</div>
-
 			</div>
 		</di>
 
@@ -414,6 +411,7 @@
 			//var objects = new Array();
 			//var raycaster = new THREE.Raycaster();
 			var mesh;
+			var pivot;
 
 			var container = document.getElementById('container');
 			//var material = 'fs_texture';
@@ -668,9 +666,9 @@
 				scene = new THREE.Scene();
 				//Coordinates.drawAllAxes();
 
-				stats = new Stats();
+				/*stats = new Stats();
 				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '0px';
+				stats.domElement.style.top = '0px';*/
 
 				renderer.setClearColor( 0xf0f0f0 );
 
@@ -686,7 +684,7 @@
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.type = THREE.PCFShadowMap;
 
-				container.appendChild( stats.domElement );
+				//container.appendChild( stats.domElement );
 
 				cubescene = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(80, 80, 80),
@@ -747,6 +745,15 @@
 
 				scene.add(lightMesh3);
 				
+				pivot = new THREE.Mesh(
+					new THREE.SphereBufferGeometry(2,8,8),
+					new THREE.MeshBasicMaterial({color: 0xff00ff, wireframe: true})
+				);
+				pivot.name = 'pivot';
+				pivot.position.set(-22, -20, -10);
+				scene.add(pivot);
+
+
 				updateUniformsLights();
 				//scene.background = textureCube;
 
@@ -792,15 +799,20 @@
 
 			function Update(time) {
 				time *= 0.001;
+				//pivot.rotation.y = time;
 				requestAnimationFrame(Update);
-				stats.update();
+				//stats.update();
 				Render();
 			}
 
 			function Render() {
 				if(loadedChair || loadedDresser) {
 
-					scene.add(mesh);
+					if(mesh.name == 'dresser') {
+						pivot.add(mesh);
+					}
+
+					else scene.add(mesh);
 
 					for(i=0; i<scene.children.length; i++) {
 						
@@ -813,8 +825,8 @@
 							//scene.children[i].rotation.x = - 90 * 3.14159 / 180;
 							scene.children[i].rotateOnWorldAxis(new THREE.Vector3(0,1,0), rotationParameters.chairR * 3.14159 /180 );
 						
-						} else if(scene.children[i].name == 'dresser') {
-							scene.children[i].position.set(-30,-20,-15)
+						} else if(scene.children[i].name == 'pivot') {
+							scene.children[i].children[0].position.set(0, 0, -10);
 
 							scene.children[i].rotation.x = 0;
 							scene.children[i].rotation.z = 0;
@@ -1174,7 +1186,7 @@
 			var goldMaterial = new goldShader();
 
 			
-			function clearGui() {
+			/*function clearGui() {
 				if ( gui ) gui.destroy();
 				gui = new dat.GUI();
 				gui.open();
@@ -1185,12 +1197,12 @@
 
 				gui.add(textureParameters,'normalScale').min(-3).max(3);
 				gui.add(textureParameters,'roughnessmetal').min(0).max(1);
-			}
+			}*/
 
 			modelLoader("dresser");
 			modelLoader("bigchair31");
 			Start();
-			buildGui();
+			//buildGui();
 			Update();
 			Render();
 
