@@ -530,7 +530,7 @@
 			] );
 
 			var textureParameters = {
-				normalScale: 0.7,
+				normalScale: 2.0,
 				roughness: 0.2,
 				roughnessmetal: 0.2,
 				repeatS: 1.0,
@@ -736,17 +736,10 @@
 				lightMesh.position.set( -23, 57, 20 );
 				lightMesh.castShadow = true;
 				lightMesh.shadow.radius = 6;
-				lightMesh.shadow.near = 8;
-				lightMesh.shadow.far = 30;
 				lightMesh.shadow.mapSize.width = 512; 
 				lightMesh.shadow.mapSize.height = 512;
 				lightMesh.shadow.bias = 0.0001;
 				
-				uniforms.pointLightPosition.value = new THREE.Vector3(
-					lightMesh.position.x,
-					lightMesh.position.y,
-					lightMesh.position.z
-				);
 				scene.add(lightMesh);
 
 				lightMesh2 = new THREE.PointLight(0xffffa0, lightParameters2.intensity, 400);
@@ -762,11 +755,7 @@
 				lightMesh2.shadow.mapSize.height = 512;
 				lightMesh2.shadow.bias = 0.0001;
 				*/
-				uniforms.pointLightPosition2.value = new THREE.Vector3(
-					lightMesh2.position.x,
-					lightMesh2.position.y,
-					lightMesh2.position.z
-				);
+				
 				scene.add(lightMesh2);
 
 				lightMesh3 = new THREE.PointLight(0xffffff, lightParameters3.intensity, 400);
@@ -774,7 +763,7 @@
 					new THREE.SphereBufferGeometry(2,8,8),
 					new THREE.MeshBasicMaterial ({color: 0x0000ff, wireframe:true})
 				);
-				lightMesh3.position.set( 20, 50, -40 );
+				lightMesh3.position.set( 40, 30, 0 );
 				lightMesh3.add(sp3);
 				lightMesh3.castShadow = true;
 				lightMesh3.shadow.radius = 6;
@@ -782,13 +771,9 @@
 				lightMesh3.shadow.mapSize.height = 512;
 				lightMesh3.shadow.bias = 0.0001;
 
-				uniforms.pointLightPosition3.value = new THREE.Vector3(
-					lightMesh3.position.x,
-					lightMesh3.position.y,
-					lightMesh3.position.z
-				);
 				scene.add(lightMesh3);
-
+				
+				updateUniformsLights();
 				//scene.background = textureCube;
 
 				//document.addEventListener( 'mousedown', onDocumentMouseDown );
@@ -1080,6 +1065,29 @@
 				uniformsLegsMetal.roughness.value = textureParameters.roughnessmetal;
 			}
 
+			function updateUniformsLights() {
+				uniforms.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,lightMesh.position.y,lightMesh.position.z);
+				uniformsMetal.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,lightMesh.position.y,lightMesh.position.z);
+				uniformsChair.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,lightMesh.position.y,lightMesh.position.z);
+				uniformsChairMetal.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,lightMesh.position.y,lightMesh.position.z);
+				uniformsLegs.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,lightMesh.position.y,lightMesh.position.z);
+				uniformsLegsMetal.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,lightMesh.position.y,lightMesh.position.z);
+
+				uniforms.pointLightPosition2.value = new THREE.Vector3(lightMesh2.position.x,lightMesh2.position.y,lightMesh2.position.z);
+				uniformsMetal.pointLightPosition2.value = new THREE.Vector3(lightMesh2.position.x,lightMesh2.position.y,lightMesh2.position.z);
+				uniformsChair.pointLightPosition2.value = new THREE.Vector3(lightMesh2.position.x,lightMesh2.position.y,lightMesh2.position.z);
+				uniformsChairMetal.pointLightPosition2.value = new THREE.Vector3(lightMesh2.position.x,lightMesh2.position.y,lightMesh2.position.z);
+				uniformsLegs.pointLightPosition2.value = new THREE.Vector3(lightMesh2.position.x,lightMesh2.position.y,lightMesh2.position.z);
+				uniformsLegsMetal.pointLightPosition2.value = new THREE.Vector3(lightMesh2.position.x,lightMesh2.position.y,lightMesh2.position.z);
+
+				uniforms.pointLightPosition3.value = new THREE.Vector3(lightMesh3.position.x,lightMesh3.position.y,lightMesh3.position.z);
+				uniformsMetal.pointLightPosition3.value = new THREE.Vector3(lightMesh3.position.x,lightMesh3.position.y,lightMesh3.position.z);
+				uniformsChair.pointLightPosition3.value = new THREE.Vector3(lightMesh3.position.x,lightMesh3.position.y,lightMesh3.position.z);
+				uniformsChairMetal.pointLightPosition3.value = new THREE.Vector3(lightMesh3.position.x,lightMesh3.position.y,lightMesh3.position.z);
+				uniformsLegs.pointLightPosition3.value = new THREE.Vector3(lightMesh3.position.x,lightMesh3.position.y,lightMesh3.position.z);
+				uniformsLegsMetal.pointLightPosition3.value = new THREE.Vector3(lightMesh3.position.x,lightMesh3.position.y,lightMesh3.position.z);
+			}
+
 			var textureShader = function() {
 				var selected;
 
@@ -1215,7 +1223,7 @@
 				leather.add(textureMaterial, 'brown');
 				leather.add(textureMaterial, 'red');
 				leather.add(textureMaterial, 'blue');
-				leather.add(textureMaterial, 'black');
+				leather.add(textureMaterial, 'gray');
 				leather.add(textureMaterial, 'green');
 
 				var wood = gui.addFolder('wood type');
@@ -1341,9 +1349,9 @@
 				document.getElementById('applier').innerHTML = 
 					'<option value="brown">Brown leather</option>' +
 					'<option value="red">Red leather</option>' +
-					'<option value="blue">Blue leather</option>' +
-					'<option value="green">green leather</option>' +
-					'<option value="black">Black leather</option>' ;
+					'<option value="blue">Blue cloth</option>' +
+					'<option value="green">Green fabric</option>' +
+					'<option value="gray">Gray fabric</option>' ;
 				} else {
 					if(name=='buttons') {
 						scene.getObjectByName("Chair_metal").material = new THREE.MeshBasicMaterial({
@@ -1397,7 +1405,7 @@
 					case 'red':
 						textureMaterial.leather('Leather05');
 						break;
-					case 'black': 
+					case 'gray': 
 						textureMaterial.leather('Fabric30');
 						break;
 					case 'brown': 
