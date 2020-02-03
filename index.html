@@ -241,9 +241,6 @@
 
 				vec3 fresnel = FSchlick( nDotv );
 
-				vec3 irradiance = textureCube(irradianceMap, wNormal).rgb;
-				irradiance = pow(irradiance, vec3(2.2));
-
 				vec3 BRDF = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/(4.0*nDotl*nDotv);
 				vec3 BRDF2 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl2)*DGGX(nDoth2,roughness*roughness)/(4.0*nDotl2*nDotv);
 				vec3 BRDF3 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl3)*DGGX(nDoth3,roughness*roughness)/(4.0*nDotl3*nDotv);
@@ -269,11 +266,13 @@
 			uniform vec3 pointLightPosition;
 			uniform vec3 pointLightPosition2;
 			uniform vec3 pointLightPosition3;
-
+			
 			uniform vec3 clight;
+			uniform vec3 clight2;
+			uniform vec3 clight3;
+
 			uniform samplerCube envMap;
 
-			uniform vec3 cdiff;
 			uniform vec3 cspec;
 			uniform float roughness;
 
@@ -386,25 +385,24 @@
 
 				vec3 fresnel = FSchlick( nDotv );
 
-				vec3 BRDF = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/(4.0*nDotl*nDotv);
-				vec3 BRDF2 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl2)*DGGX(nDoth2,roughness*roughness)/(4.0*nDotl2*nDotv);
-				vec3 BRDF3 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl3)*DGGX(nDoth3,roughness*roughness)/(4.0*nDotl3*nDotv);
+				float blinnShininessExponent = GGXRoughnessToBlinnExponent(roughness);
+				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent,8 );
+
+	 			vec3 envLight = textureCubeLodEXT( envMap, vec3(-r.x, r.yz), specularMIPLevel ).rgb;
+	 			// texture in sRGB, linearize
+				envLight = pow( envLight, vec3(2.2));
 
 				vec3 sBRDF = BRDF_Specular_GGX_Environment(n, v, cspec, roughness);
 
-				//SPECULAR + ROUGHNESS
-				float blinnShininessExponent = GGXRoughnessToBlinnExponent(roughness);
-				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent, 8 );
-				vec3 envLight = textureCubeLodEXT(envMap, vec3( -r.x, r.yz ), specularMIPLevel).rgb;
+				vec3 BRDF = fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/(4.0*nDotl*nDotv);
+				vec3 BRDF2 = fresnel*GSmith(nDotv,nDotl2)*DGGX(nDoth2,roughness*roughness)/(4.0*nDotl2*nDotv);
+				vec3 BRDF3 = fresnel*GSmith(nDotv,nDotl3)*DGGX(nDoth3,roughness*roughness)/(4.0*nDotl3*nDotv);
 
-				//linearize from sRGB
-				envLight = pow( envLight, vec3(2.2));
 
-				vec3 outRadiance = envLight * sBRDF + ((nDotl*clight*BRDF)+(nDotl2*clight*BRDF)+(nDotl3*BRDF3*clight));
-				//ADD COLOR
-				outRadiance *= cdiff;
-
+				vec3 outRadiance = envLight * sBRDF + ( (BRDF*nDotl*clight) + (nDotl2*BRDF2*clight2) + (nDotl3*BRDF3*clight3) ) * PI;
+				// gamma encode the final value
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
+				//gl_FragColor = vec4(r,1.0);
 			}
 		</script>
 
@@ -453,12 +451,6 @@
 				green: 0,
 				blue: 0,
 			};
-			var cdiffcopper = {
-
-			};
-			var cdiffmetal = {
-
-			};
 
 			var cspec = {
 				red: 1.0,
@@ -467,26 +459,23 @@
 				roughness: 0.5
 			};
 
-			var cspecmetal = {
-				red: 1.0,
-				green: 0.78,
-				blue: 0.34,
-				roughness: 0.2
-			};
 			var cspecgold = {
 				red: 1.0,
 				green: 0.78,
-				blue: 0.34,
-				roughness: 0.2
+				blue: 0.34
 			};
 			var cspeccopper = {
-				red: 1.0,
-				green: 0.78,
-				blue: 0.34,
-				roughness: 0.2
+				red: 0.72,
+				green: 0.45,
+				blue: 0.20
 			};
+			var cspecalum = {
+				red: 0.5,
+				green: 0.5,
+				blue: 0.5
+			}
 
-			var normalMap = textureLoader('textures/wood/Wood26_nrm.jpg');
+			var normalMap = textureLoader('textures/dresser/normal.png');
 			var diffuseMap = textureLoader('textures/wood/Wood26_col.jpg');
 			var roughnessMap = textureLoader('textures/wood/Wood26_rgh.jpg');
 
@@ -530,9 +519,9 @@
 			] );
 
 			var textureParameters = {
-				normalScale: 2.0,
-				roughness: 0.2,
-				roughnessmetal: 0.2,
+				normalScale: 1.1,
+				roughness: 0.5,
+				roughnessmetal: 0.35,
 				repeatS: 1.0,
 				repeatT: 1.0,
 				textureMap: ''
@@ -568,15 +557,10 @@
 			
 			var uniformsMetal = {
 				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
 				roughness: { type: "f", value: 0.5 },
 				
 				normalMap:	{ type: "t", value: normalMap },
 				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				irradianceMap:	{ type: "t", value: irradianceMap},
-
-				textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
 
 				envMap: { type: "t", value: textureCube },
 
@@ -585,8 +569,8 @@
 				pointLightPosition3: { type: "v3", value: new THREE.Vector3() },
 
 				clight:	{ type: "v3", value: new THREE.Vector3() },
-				clight2:	{ type: "v3", value: new THREE.Vector3() },
-				clight3:	{ type: "v3", value: new THREE.Vector3() },
+				clight2: { type: "v3", value: new THREE.Vector3() },
+				clight3: { type: "v3", value: new THREE.Vector3() },
 			};
 			
 			var uniformsChair = {
@@ -614,15 +598,10 @@
 
 			var uniformsChairMetal = {
 				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
 				roughness: { type: "f", value: 0.5 },
 				
 				normalMap:	{ type: "t", value: normalMapChair },
 				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				irradianceMap:	{ type: "t", value: irradianceMap},
-
-				textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
 
 				envMap: { type: "t", value: textureCube },
 
@@ -660,15 +639,10 @@
 
 			var uniformsLegsMetal = {
 				cspec:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
-				cdiff:	{ type: "v3", value: new THREE.Vector3(0.8,0.8,0.8) },
 				roughness: { type: "f", value: 0.5 },
 				
 				normalMap:	{ type: "t", value: normalMapLegs },
 				normalScale: { type: "v2", value: new THREE.Vector2(1,1) },
-
-				irradianceMap:	{ type: "t", value: irradianceMap},
-
-				textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
 
 				envMap: { type: "t", value: textureCube },
 
@@ -824,7 +798,6 @@
 			}
 
 			function Render() {
-
 				if(loadedChair || loadedDresser) {
 
 					scene.add(mesh);
@@ -854,7 +827,6 @@
 				document.getElementById('chairR').innerHTML = (rotationParameters.chairR).toString().substr(0,5);
 				document.getElementById('dresserR').innerHTML = (rotationParameters.dresserR).toString().substr(0,5);
 				
-				
 				updateUniforms();
 				updateUniformsChair();
 				updateUniformsLegs();
@@ -871,18 +843,6 @@
 					lightMesh.position.x,
 					lightMesh.position.y,
 					lightMesh.position.z
-				);
-
-				uniformsMetal.cdiff.value = new THREE.Vector3(
-					cdiffmetal.red,
-					cdiffmetal.green,
-					cdiffmetal.blue
-				);
-
-				uniformsMetal.cspec.value = new THREE.Vector3(
-					cspecmetal.red,
-					cspecmetal.green,
-					cspecmetal.blue
 				);
 
 				uniforms.clight.value = new THREE.Vector3(
@@ -905,6 +865,16 @@
 					lightParameters.green * lightParameters.intensity,
 					lightParameters.blue * lightParameters.intensity
 				);
+				uniformsMetal.clight2.value = new THREE.Vector3(
+					lightParameters2.red * lightParameters2.intensity,
+					lightParameters2.green * lightParameters2.intensity,
+					lightParameters2.blue * lightParameters2.intensity
+				);
+				uniformsMetal.clight3.value = new THREE.Vector3(
+					lightParameters3.red * lightParameters3.intensity,
+					lightParameters3.green * lightParameters3.intensity,
+					lightParameters3.blue * lightParameters3.intensity
+				);
 
 				uniforms.textureRepeat.value = new THREE.Vector2( 
 					textureParameters.repeatS, 
@@ -917,7 +887,6 @@
 
 				//uniforms.normalMap.value = normalMap;
 				//uniformsMetal.normalMap.value = normalMap;
-				//uniformsGlass.normalMap.value = normalMap;
 
 				uniforms.normalScale.value = new THREE.Vector2( 
 					textureParameters.normalScale, 
@@ -943,17 +912,6 @@
 					lightMesh.position.z
 				);
 
-				uniformsChairMetal.cdiff.value = new THREE.Vector3(
-					cdiffmetal.red,
-					cdiffmetal.green,
-					cdiffmetal.blue
-				);
-				uniformsChairMetal.cspec.value = new THREE.Vector3(
-					cspecmetal.red,
-					cspecmetal.green,
-					cspecmetal.blue
-				);
-
 				uniformsChair.clight.value = new THREE.Vector3(
 					lightParameters.red * lightParameters.intensity,
 					lightParameters.green * lightParameters.intensity,
@@ -973,6 +931,16 @@
 					lightParameters.red * lightParameters.intensity,
 					lightParameters.green * lightParameters.intensity,
 					lightParameters.blue * lightParameters.intensity
+				);
+				uniformsChairMetal.clight2.value = new THREE.Vector3(
+					lightParameters2.red * lightParameters2.intensity,
+					lightParameters2.green * lightParameters2.intensity,
+					lightParameters2.blue * lightParameters2.intensity
+				);
+				uniformsChairMetal.clight3.value = new THREE.Vector3(
+					lightParameters3.red * lightParameters3.intensity,
+					lightParameters3.green * lightParameters3.intensity,
+					lightParameters3.blue * lightParameters3.intensity
 				);
 
 				uniformsChair.textureRepeat.value = new THREE.Vector2( 
@@ -1010,17 +978,6 @@
 					lightMesh.position.z
 				);
 
-				uniformsLegsMetal.cdiff.value = new THREE.Vector3(
-					cdiffmetal.red,
-					cdiffmetal.green,
-					cdiffmetal.blue
-				);
-				uniformsLegsMetal.cspec.value = new THREE.Vector3(
-					cspecmetal.red,
-					cspecmetal.green,
-					cspecmetal.blue
-				);
-
 				uniformsLegs.clight.value = new THREE.Vector3(
 					lightParameters.red * lightParameters.intensity,
 					lightParameters.green * lightParameters.intensity,
@@ -1040,6 +997,16 @@
 					lightParameters.red * lightParameters.intensity,
 					lightParameters.green * lightParameters.intensity,
 					lightParameters.blue * lightParameters.intensity
+				);
+				uniformsLegsMetal.clight2.value = new THREE.Vector3(
+					lightParameters2.red * lightParameters2.intensity,
+					lightParameters2.green * lightParameters2.intensity,
+					lightParameters2.blue * lightParameters2.intensity
+				);
+				uniformsLegsMetal.clight3.value = new THREE.Vector3(
+					lightParameters3.red * lightParameters3.intensity,
+					lightParameters3.green * lightParameters3.intensity,
+					lightParameters3.blue * lightParameters3.intensity
 				);
 
 				uniformsLegs.textureRepeat.value = new THREE.Vector2( 
@@ -1109,7 +1076,7 @@
 
 				this.wood = function(uniforms, img) {
 					selected = scene.getObjectByName(selection);
-					uniforms.normalMap.value = textureLoader('textures/wood/'+img+'_nrm.jpg');
+					//uniforms.normalMap.value = textureLoader('textures/wood/'+img+'_nrm.jpg');
 					uniforms.roughnessMap.value = textureLoader('textures/wood/'+img+'_rgh.jpg');
 					uniforms.diffuseMap.value = textureLoader('textures/wood/'+img+'_col.jpg');
 					selected.material = new THREE.ShaderMaterial({
@@ -1123,16 +1090,26 @@
 			var textureMaterial = new textureShader();
 
 			var goldShader = function() {
-				this.metalF = function() {
+				this.metalF = function(cspec) {
 					var selected = scene.getObjectByName(selection);
 					if(selection == 'Chair_foot') {
-							selected.material = new THREE.ShaderMaterial({
-								extensions: materialExtensions,
-								uniforms: uniformsLegsMetal,
-								vertexShader: document.getElementById('vs').textContent,
-								fragmentShader: document.getElementById('fs_metal').textContent
-							});
+						uniformsLegsMetal.cspec.value = new THREE.Vector3(
+							cspec.red,
+							cspec.green,
+							cspec.blue
+						);
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniformsLegsMetal,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_metal').textContent
+						});
 					} else if(selection == "buttons") {
+						uniformsChairMetal.cspec.value = new THREE.Vector3(
+							cspec.red,
+							cspec.green,
+							cspec.blue
+						);
 						selected = scene.getObjectByName("Chair_button");
 						selected.material = new THREE.ShaderMaterial({
 							extensions: materialExtensions,
@@ -1149,6 +1126,11 @@
 							fragmentShader: document.getElementById('fs_metal').textContent
 						});
 					} else if(selection=='legs') {
+						uniformsMetal.cspec.value = new THREE.Vector3(
+							cspec.red,
+							cspec.green,
+							cspec.blue
+						);
 						selected = scene.getObjectByName("Low c_low");
 						selected.material = new THREE.ShaderMaterial({
 							extensions: materialExtensions,
@@ -1165,6 +1147,11 @@
 							fragmentShader: document.getElementById('fs_metal').textContent
 						});
 					} else if(selection=='Low d_low') {
+						uniformsMetal.cspec.value = new THREE.Vector3(
+							cspec.red,
+							cspec.green,
+							cspec.blue
+						);
 						selected.material = new THREE.ShaderMaterial({
 							extensions: materialExtensions,
 							uniforms: uniformsMetal,
@@ -1175,24 +1162,13 @@
 				};
 
 				this.gold = function() {
-					textureParameters.roughnessmetal = 0.2;
-
-
-					cspecmetal.red = 1.0;
-					cspecmetal.green = 0.78;
-					cspecmetal.blue = 0.34;
-					
-					this.metalF();
+					this.metalF(cspecgold);
 				}
 				this.copper = function () {
-					textureParameters.roughnessmetal = 0.4;
-
-
-					cspecmetal.red = 0.955;
-					cspecmetal.green = 0.638;
-					cspecmetal.blue = 0.538;
-
-					this.metalF();
+					this.metalF(cspeccopper);
+				}
+				this.aluminium = function() {
+					this.metalF(cspecalum);
 				}
 			};
 			var goldMaterial = new goldShader();
@@ -1208,32 +1184,7 @@
 				clearGui();
 
 				gui.add(textureParameters,'normalScale').min(-3).max(3);
-				/*gui.add(lightParameters, 'intensity').min(0).max(3);
-				gui.add(lightParameters2, 'intensity').min(0).max(3);
-				gui.add(lightParameters3, 'intensity').min(0).max(3);
-				gui.add(rotationParameters,'chairR').min(0).max(360);
-				gui.add(rotationParameters,'dresserR').min(0).max(360);
-
-				var mt = gui.addFolder('metal params');
-				mt.add(cdiffmetal,'red').min(0).max(1);
-				mt.add(cdiffmetal,'green').min(0).max(1);
-				mt.add(cdiffmetal,'blue').min(0).max(1);
-
-				var leather = gui.addFolder('leather color');
-				leather.add(textureMaterial, 'brown');
-				leather.add(textureMaterial, 'red');
-				leather.add(textureMaterial, 'blue');
-				leather.add(textureMaterial, 'gray');
-				leather.add(textureMaterial, 'green');
-
-				var wood = gui.addFolder('wood type');
-				wood.add(textureMaterial, 'Wood26');
-				wood.add(textureMaterial, 'Wood31');
-				wood.add(textureMaterial, 'Wood35');
-				wood.add(textureMaterial, 'Wood08');
-
-				gui.add(goldMaterial, 'gold');
-				gui.add(goldMaterial,  'copper');*/
+				gui.add(textureParameters,'roughnessmetal').min(0).max(1);
 			}
 
 			modelLoader("dresser");
@@ -1266,13 +1217,16 @@
 									fragmentShader: document.getElementById('fs_texture').textContent
 								});
 
-								if(mesh.children[i].name == 'Chair_foot')
+								if(mesh.children[i].name == 'Chair_foot') {
+								uniformsLegsMetal.cspec.value = new THREE.Vector3(cspecgold.red,cspecgold.green,cspecgold.blue);
+
 									mesh.children[i].material = new THREE.ShaderMaterial({
 										extensions: materialExtensions,
-										uniforms: uniformsLegs,
+										uniforms: uniformsLegsMetal,
 										vertexShader: document.getElementById('vs').textContent,
-										fragmentShader: document.getElementById('fs_texture').textContent
+										fragmentShader: document.getElementById('fs_metal').textContent
 									});
+								}
 
 							} else if (name=='dresser') {
 								
@@ -1335,7 +1289,8 @@
 						opacity: 0.3
 					});
 					document.getElementById('applier').innerHTML =
-						'<option value="Wood26">Ebony wood</option>' +
+						'<option value="Wood26">Hazelnut wood</option>' +
+						'<option value="Wood00">Ebony wood</option>' +
 						'<option value="Wood31">Beech wood</option>' +
 						'<option value="Wood35">Olive wood</option>' +
 						'<option value="Wood08">Cherry wood</option>' ;
@@ -1387,12 +1342,14 @@
 						});
 					};
 					document.getElementById('applier').innerHTML =
-						'<option value="Wood26">Ebony wood</option>' +
+						'<option value="Wood26">Hazelnut wood</option>' +
+						'<option value="Wood00">Ebony wood</option>' +
 						'<option value="Wood31">Beech wood</option>' +
 						'<option value="Wood35">Olive wood</option>' +
 						'<option value="Wood08">Cherry wood</option>' +
 						'<option value="gold">Metallic gold</option>' +
-						'<option value="copper">Metallic copper</option>' ;
+						'<option value="copper">Metallic copper</option>' +
+						'<option value="alum">Metallic aluminium</option>' ;
 				};
 				console.log(selection);
 
@@ -1417,39 +1374,10 @@
 					case 'green': 
 						textureMaterial.leather('Fabric27');
 						break;
-					case 'Wood26': 
-						if(selection=='Chair_foot') textureMaterial.wood(uniformsLegs, name);
-						else if(selection=='legs') {
-							selection = 'Low e_low';
-							textureMaterial.wood(uniforms, name);
-							selection = 'Low c_low';
-							textureMaterial.wood(uniforms, name);
-							selection = 'legs';
-						}
-						else if(selection!='Chair_back' && selection!='buttons') textureMaterial.wood(uniforms, name);
-						break;
+					case 'Wood00': 
+					case 'Wood26':
 					case 'Wood31': 
-						if(selection=='Chair_foot') textureMaterial.wood(uniformsLegs, name);
-						else if(selection=='legs') {
-							selection = 'Low e_low';
-							textureMaterial.wood(uniforms, name);
-							selection = 'Low c_low';
-							textureMaterial.wood(uniforms, name);
-							selection = 'legs';
-						}
-						else if(selection!='Chair_back' && selection!='buttons') textureMaterial.wood(uniforms, name);
-						break;
 					case 'Wood35':
-						if(selection=='Chair_foot') textureMaterial.wood(uniformsLegs, name);
-						else if(selection=='legs') {
-							selection = 'Low e_low';
-							textureMaterial.wood(uniforms, name);
-							selection = 'Low c_low';
-							textureMaterial.wood(uniforms, name);
-							selection = 'legs';
-						}
-						else if(selection!='Chair_back' && selection!='buttons') textureMaterial.wood(uniforms, name);
-						break;
 					case 'Wood08': 
 						if(selection=='Chair_foot') textureMaterial.wood(uniformsLegs, name);
 						else if(selection=='legs') {
@@ -1467,6 +1395,8 @@
 					case 'copper':
 						goldMaterial.copper();
 						break;
+					case 'alum':
+						goldMaterial.aluminium();
 				}
 
 				if(selection=='buttons') {
