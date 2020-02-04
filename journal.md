@@ -38,7 +38,66 @@ Prima separazione dei componenti, attribuendo i materiali, shader e texture dive
 
 Highlight dell'elemento selezionato con MeshBasicMaterial.
 ![](report/14.png)
+![](report/15.png)
 
 * **15 gennaio 2020**
 
+Environment map applicata ad un cubo o ad una sfera per costruire una stanza attorno alla scena.
+![](report/17.png)
+![](report/18.png)
 
+* **16 gennaio 2020**
+
+Aggiunta di materiali e texture alternativi come opzioni per lo shader.
+![](report/19.png)
+
+* **20 gennaio 2020**
+
+Sviluppo di una prima interfaccia per selezionare gli oggetti senza mouse (problemi causati dal resizing del canvas all'interno della finestra).
+![](report/20.png)
+
+* **20 gennaio 2020**
+
+Applicazione dei materiali attraverso l'interfaccia html.
+![](report/21.png)
+
+* **21 gennaio 2020**
+
+Aggiornamento css e nuova environment map.
+![](report/23.png)
+
+* **22 gennaio 2020**
+
+Aggiunta ombre e shadowmap.
+![](report/24.png)
+
+* **22 gennaio 2020**
+
+Aggiornamento luci e posizionamento coerente con environment map.
+![](report/25.png)
+![](report/25.png)
+
+* **22 gennaio 2020**
+
+Nuovi materiali e texture per legno e pelle.
+![](report/27.png)
+![](report/28.png)
+
+* **24 gennaio 2020**
+
+Nuova interfaccia html e nuovo modello poltrona (più leggero e con meno vertici, per alleggerire il rendering).
+![](report/30.png)
+
+* **3 febbraio 2020**
+
+Layout aggiornato tipo sito web e rotazione su se stessi funzionante per gli oggetti.
+![](report/31.png)
+
+* **4 febbraio 2020**
+
+Tonemapping per risaltare i mobili come luce in studio.
+![](report/32.png)
+
+* **4 febbraio 2020**
+Separazione della mesh dei cassetti dal resto della cassettiera, per permettere più personalizzazione.
+![](report/33.png)
