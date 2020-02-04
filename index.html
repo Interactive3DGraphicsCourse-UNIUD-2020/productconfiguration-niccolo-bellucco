@@ -458,25 +458,6 @@
 			var loadedDresser = false;
 			var dresserWood = 'Wood26';
 
-			//parametri postprocessing
-			var toneParameters = {				
-				roughness: 1.0,				
-				exposure: 2.0,				
-				toneMapping: THREE.Uncharted2ToneMapping,
-				renderMode: "Renderer"
-			};  
-			var postprocessing = {};
-			var effectController = {
-				focus: 500.0,
-				aperture:	5,
-				maxblur:	1.0
-			};
-			var matChanger = function ( ) {
-				postprocessing.bokeh.uniforms[ "focus" ].value = effectController.focus;
-				postprocessing.bokeh.uniforms[ "aperture" ].value = effectController.aperture * 0.00001;
-				postprocessing.bokeh.uniforms[ "maxblur" ].value = effectController.maxblur;
-			};
-
 			//parametri di illuminazione
 			var lightParameters = {
 				red: 1.0,
@@ -744,7 +725,9 @@
 				renderer.shadowMap.enabled = true;
 				renderer.shadowMap.type = THREE.PCFShadowMap;
 
-				//container.appendChild( stats.domElement );
+				renderer.toneMapping = THREE.CineonToneMapping;
+				renderer.toneMappingWhitePoint = 1.0;
+				renderer.toneMappingExposure = 0.6;
 
 				cubescene = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(80, 80, 80),
