@@ -9,29 +9,41 @@
 	</head>
 	<body>
 		<div>
+			<div class="topnav">
+				<a href="#home">Home</a>
+				<a href="#products">Products</a>
+				<a class='active' href="#customize">Customize</a>
+				<a href="#about">About</a>
+			</div>
+			<div >
+				<span class='banner'>Customize</span><span class='subtitle'> your living room</span>
+			</div>
 			<div class='row'>
 				<div class='col-sm-8' id="container" ></div>
 			
 			
-				<div class='col-sm-3' style='margin-left: 20px; margin-top: 20px;'>
-					<div style="text-align: left;">
-						<div ><label style='width: 200px;'>Chair rotation:</label><label id='chairR'></label></div>
+				<div class='menu col-sm-3'>
+					<div >
+						<div ><label class='label' >Chair rotation:</label><label id='chairR'></label></div>
 						<div ><input type='range' min='0' max='360' value='105' class="slider" id='rotchair' oninput='rotate(event)' /></div>
 					</div>
 					<br/>
-					<div style="text-align: left;">
-						<div ><label style='width: 200px;'>Dresser rotation:</label><label id='dresserR'></label></div>
+					<div >
+						<div ><label class='label'>Dresser rotation:</label><label id='dresserR'></label></div>
 						<div ><input type='range' min='0' max='360' value='55' class="slider" id='rotdresser' oninput='rotate(event)'/></div>
 					</div>
+
 					<hr/>
-					<div id='row'><div style="text-align: left; font-family: Verdana; font-size: 15px;">
-						<label>Choose an object</label>
-						<form style='padding-left:10px;' id='form' onclick='unlockFunction()'>
-							<input type="radio" name="object" value="chair">Armchair</input><br/>
-							<input type="radio" name="object" value="dresser">Dresser</input>
-						</form>
-					</div>
-						<select style='width: 200px' id='selector'>
+
+					<div >
+						<div style="text-align: left; font-family: Verdana; font-size: 15px;">
+							<label>Choose an object</label>
+							<form style='margin-left:10px;' id='form' onclick='unlockFunction()'>
+								<input style='margin-left: 10px' type="radio" name="object" value="chair">Armchair</input><br/>
+								<input style='margin-left: 10px' type="radio" name="object" value="dresser">Dresser</input>
+							</form>
+						</div>
+						<select id='selector'>
 							<option value='none'>Select an object</option>
 						</select>
 						<button class='dropbtn' 
@@ -44,7 +56,7 @@
 						<br/>
 						<br/>
 						<label>Customize the material</label>
-						<select style='width: 200px' id='applier' disabled>
+						<select id='applier' disabled>
 							<option value='none'>Select a component</option>
 						</select>
 						<button class='dropbtn' 
@@ -57,7 +69,17 @@
 					
 				</div>
 			</div>
-		</di>
+			
+			<div class='row'>
+				<div class='col-sm-9'></div>
+				<div class='col-sm-3' style='text-align: center;'>
+					<button class='dropbtn'>
+						Confirm and order >>
+					</button>
+				</div>
+
+			</div>
+		</div>
 
 		<script src="libs\three.min.js"></script>
 		<script src="libs\stats.min.js"></script> 
@@ -67,6 +89,12 @@
 		<!-- <script src='libs\GLTFLoader.js'></script> -->
 		<script src='libs\dat.gui.min.js'></script>
 		<!-- <script src='libs\BufferGeometryUtils.js'></script> -->
+		<script src='libs\EffectComposer.js'></script>
+		<script src='libs\RenderPass.js'></script>
+		<script src='libs\BokehPass.js'></script>
+		<script src='libs\BokehShader.js'></script>
+		<script src='libs\CopyShader.js'></script>
+		<script src='libs\ShaderPass.js'></script>
 		<script src='libs\SceneUtils.js'></script>
 
 		<script type='text/x-glsl' id='vs'>
@@ -242,7 +270,13 @@
 				vec3 BRDF2 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl2)*DGGX(nDoth2,roughness*roughness)/(4.0*nDotl2*nDotv);
 				vec3 BRDF3 = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl3)*DGGX(nDoth3,roughness*roughness)/(4.0*nDotl3*nDotv);
 
-				vec3 outRadiance = ( (BRDF*nDotl*clight) + (nDotl2*BRDF2*clight2) + (nDotl3*BRDF3*clight3) ) * PI;
+				float blinnShininessExponent = GGXRoughnessToBlinnExponent(roughness);
+				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent,8 );
+
+	 			vec3 envLight = textureCubeLodEXT( envMap, vec3(-r.x, r.yz), specularMIPLevel ).rgb;
+				envLight = pow( envLight, vec3(2.2));
+
+				vec3 outRadiance = ( (BRDF*nDotl*clight) + (nDotl2*BRDF2*clight2) + (nDotl3*BRDF3*clight3) ) *PI;
 
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
 
@@ -406,71 +440,78 @@
 		<script>
 			var scene, camera, renderer;
 			var stats, controls, gui;
+
+			//variabili luci e oggetti
 			var lightMesh, lightMesh2, lightMesh3;
-			var textureCube, cubescene, geom;
+			var textureCube, cubescene, mesh, pivot;
+
+			//variabili per selezione con mouse
 			//var objects = new Array();
 			//var raycaster = new THREE.Raycaster();
-			var mesh;
-			var pivot;
 
+			//contenitore canvas
 			var container = document.getElementById('container');
-			//var material = 'fs_texture';
+
+			//selezione oggetti
 			selection = '';
 			var loadedChair = false;
 			var loadedDresser = false;
+			var dresserWood = 'Wood26';
 
+			//parametri postprocessing
+			var toneParameters = {				
+				roughness: 1.0,				
+				exposure: 2.0,				
+				toneMapping: THREE.Uncharted2ToneMapping,
+				renderMode: "Renderer"
+			};  
+			var postprocessing = {};
+			var effectController = {
+				focus: 500.0,
+				aperture:	5,
+				maxblur:	1.0
+			};
+			var matChanger = function ( ) {
+				postprocessing.bokeh.uniforms[ "focus" ].value = effectController.focus;
+				postprocessing.bokeh.uniforms[ "aperture" ].value = effectController.aperture * 0.00001;
+				postprocessing.bokeh.uniforms[ "maxblur" ].value = effectController.maxblur;
+			};
+
+			//parametri di illuminazione
 			var lightParameters = {
 				red: 1.0,
 				green: 1.0,
-				blue: 0.7,
-				intensity: 0.5,
+				blue: 0.8,
+				intensity: 0.8,
 			};
 			var lightParameters2 = {
 				red: 1.0,
 				green: 1.0,
-				blue: 0.7,
-				intensity: 0.5,
+				blue: 0.8,
+				intensity: 0.8,
 			};
 			var lightParameters3 = {
 				red: 1.0,
 				green: 1.0,
 				blue: 1.0,
-				intensity: 0.8,
+				intensity: 0.5,
 			};
 
-			var cdiff = {
-				red: 1.0,
-				green: 1.0,
-				blue: 1.0,
-			};
-
-			var cdiffgold = {
-				red: 0,
-				green: 0,
-				blue: 0,
-			};
-
-			var cspec = {
-				red: 1.0,
-				green: 1.0,
-				blue: 1.0,
-				roughness: 0.5
-			};
-
+			//parametri per materiali metallici
 			var cspecgold = {
-				red: 1.0,
-				green: 0.78,
-				blue: 0.34
+				red: 1.022,
+				green: 0.782,
+				blue: 0.344
 			};
 			var cspeccopper = {
-				red: 0.72,
-				green: 0.45,
-				blue: 0.20
+				red: 0.955,
+				green: 0.638,
+				blue: 0.538
 			};
 			var cspecalum = {
-				red: 0.5,
-				green: 0.5,
-				blue: 0.5
+				red: 0.913,
+				green: 0.922,
+				blue: 0.924
 			}
 
 			var normalMap = textureLoader('textures/dresser/normal.png');
@@ -489,9 +530,9 @@
 			loader.setPath( 'textures/vetrata/' );
 
 			var textureCube = loader.load( [
-				'pz.png', 'nz.png',
+				'px.png', 'nx.png',
 				'py.png', 'ny.png',
-				'px.png', 'nx.png'
+				'pz.png', 'nz.png'
 			] );
 			textureCube.minFilter = THREE.LinearMipMapLinearFilter;
 
@@ -519,7 +560,7 @@
 			var textureParameters = {
 				normalScale: 1.1,
 				roughness: 0.5,
-				roughnessmetal: 0.35,
+				roughnessmetal: 0.3,
 				repeatS: 1.0,
 				repeatT: 1.0,
 				textureMap: ''
@@ -658,6 +699,8 @@
 				shaderTextureLOD: true
 			};
 
+			
+
 			function Start() {
 				
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -670,6 +713,22 @@
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';*/
 
+				renderPass = new THREE.RenderPass( scene, camera );
+				bokehPass = new THREE.BokehPass( scene, camera, {
+					focus: 1.0,
+					aperture:	0.025,
+					maxblur:	1.0,
+					width: parent.clientWidth,
+					height: parent.clientHeight
+				} );
+
+				composer = new THREE.EffectComposer( renderer );
+				composer.addPass( renderPass );
+				composer.addPass( bokehPass );
+				postprocessing.composer = composer;
+				postprocessing.bokeh = bokehPass;
+
+
 				renderer.setClearColor( 0xf0f0f0 );
 
 				camera.position.set( 20, 30, 60 );
@@ -678,6 +737,7 @@
 
 				container.appendChild( renderer.domElement );
 				renderer.setPixelRatio( window.devicePixelRatio );
+				composer.setPixelRatio( window.devicePixelRatio );
 
 				renderer.setSize(container.clientWidth, container.clientWidth / (window.innerWidth/window.innerHeight));
 
@@ -688,7 +748,7 @@
 
 				cubescene = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(80, 80, 80),
-					//new THREE.MeshBasicMaterial({map:spheretexture, side: THREE.BackSide})
+					//new THREE.MeshPhongMaterial({color: 0xffffff, side: THREE.BackSide})
 					textureEnvironment
 				);
 				cubescene.position.set(0, 20, 0);
@@ -698,13 +758,21 @@
 				cubescene.castShadow = false;
 				scene.add(cubescene);
 
+				pivot = new THREE.Mesh(
+					new THREE.SphereBufferGeometry(2,8,8),
+					new THREE.MeshBasicMaterial({color: 0xff00ff, wireframe: true})
+				);
+				pivot.name = 'pivot';
+				pivot.position.set(-22, -20, -10);
+				scene.add(pivot);
+
 				lightMesh = new THREE.PointLight(0xffffa0, lightParameters.intensity, 400);
 				var sp = new THREE.Mesh( 
 					new THREE.SphereBufferGeometry( 2, 8, 8),
 					new THREE.MeshBasicMaterial ({color: 0xff0000, wireframe:true})
 				);
 				
-				lightMesh.add(sp);
+				//lightMesh.add(sp);
 				lightMesh.position.set( -23, 57, 20 );
 				lightMesh.castShadow = true;
 				lightMesh.shadow.radius = 6;
@@ -714,13 +782,13 @@
 				
 				scene.add(lightMesh);
 
-				lightMesh2 = new THREE.PointLight(0xffffa0, lightParameters2.intensity, 400);
+				lightMesh2 = new THREE.PointLight(0xffffa0, lightParameters2.intensity,  400);
 				var sp2 = new THREE.Mesh( 
 					new THREE.SphereBufferGeometry( 2,8,8),
 					new THREE.MeshBasicMaterial ({color: 0x00ff00, wireframe:true})
 				);
 				lightMesh2.position.set( 0, 57, -10 );
-				lightMesh2.add(sp2);
+				//lightMesh2.add(sp2);
 				//lightMesh2.castShadow = true;
 				/*lightMesh2.shadow.radius = 6;
 				lightMesh2.shadow.mapSize.width = 512; 
@@ -736,7 +804,7 @@
 					new THREE.MeshBasicMaterial ({color: 0x0000ff, wireframe:true})
 				);
 				lightMesh3.position.set( 40, 30, 0 );
-				lightMesh3.add(sp3);
+				//lightMesh3.add(sp3);
 				lightMesh3.castShadow = true;
 				lightMesh3.shadow.radius = 6;
 				lightMesh3.shadow.mapSize.width = 512; 
@@ -745,18 +813,11 @@
 
 				scene.add(lightMesh3);
 				
-				pivot = new THREE.Mesh(
-					new THREE.SphereBufferGeometry(2,8,8),
-					new THREE.MeshBasicMaterial({color: 0xff00ff, wireframe: true})
-				);
-				pivot.name = 'pivot';
-				pivot.position.set(-22, -20, -10);
-				scene.add(pivot);
-
+				
 
 				updateUniformsLights();
-				//scene.background = textureCube;
 
+				//scene.background = textureCube;
 				//document.addEventListener( 'mousedown', onDocumentMouseDown );
 				controls.update();
 
@@ -833,6 +894,9 @@
 							scene.children[i].rotation.y = rotationParameters.dresserR * 3.14159 /180;
 						}
 					}
+
+					lightMesh.target = pivot;
+					lightMesh2.target = mesh;
 					
 				}
 
@@ -842,7 +906,13 @@
 				updateUniforms();
 				updateUniformsChair();
 				updateUniformsLegs();
-				renderer.render(scene, camera);
+				if ( toneParameters.renderMode === "Composer" ) {        
+					//composer.render();
+					postprocessing.composer.render( 0.1 );
+				} else {
+					renderer.render( scene, camera );
+				} 
+
 			}
 
 			function updateUniforms() {
@@ -1087,16 +1157,40 @@
 				};
 
 				this.wood = function(uniforms, img) {
-					selected = scene.getObjectByName(selection);
-					//uniforms.normalMap.value = textureLoader('textures/wood/'+img+'_nrm.jpg');
-					uniforms.roughnessMap.value = textureLoader('textures/wood/'+img+'_rgh.jpg');
-					uniforms.diffuseMap.value = textureLoader('textures/wood/'+img+'_col.jpg');
-					selected.material = new THREE.ShaderMaterial({
-						extensions: materialExtensions,
-						uniforms: uniforms,
-						vertexShader: document.getElementById('vs').textContent,
-						fragmentShader: document.getElementById('fs_texture').textContent
-					});
+					if(selection=='legs') {
+						selected = scene.getObjectByName('Low c_low');
+						//uniforms.normalMap.value = textureLoader('textures/wood/'+img+'_nrm.jpg');
+						uniforms.roughnessMap.value = textureLoader('textures/wood/'+img+'_rgh.jpg');
+						uniforms.diffuseMap.value = textureLoader('textures/wood/'+img+'_col.jpg');
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniforms,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_texture').textContent
+						});
+						selected = scene.getObjectByName('Low e_low');
+						//uniforms.normalMap.value = textureLoader('textures/wood/'+img+'_nrm.jpg');
+						uniforms.roughnessMap.value = textureLoader('textures/wood/'+img+'_rgh.jpg');
+						uniforms.diffuseMap.value = textureLoader('textures/wood/'+img+'_col.jpg');
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniforms,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_texture').textContent
+						});
+					} else {
+						selected = scene.getObjectByName(selection);
+						//uniforms.normalMap.value = textureLoader('textures/wood/'+img+'_nrm.jpg');
+						uniforms.roughnessMap.value = textureLoader('textures/wood/'+img+'_rgh.jpg');
+						uniforms.diffuseMap.value = textureLoader('textures/wood/'+img+'_col.jpg');
+						selected.material = new THREE.ShaderMaterial({
+							extensions: materialExtensions,
+							uniforms: uniforms,
+							vertexShader: document.getElementById('vs').textContent,
+							fragmentShader: document.getElementById('fs_texture').textContent
+						});
+					}
+					
 				};
 			}
 			var textureMaterial = new textureShader();
@@ -1158,7 +1252,7 @@
 							vertexShader: document.getElementById('vs').textContent,
 							fragmentShader: document.getElementById('fs_metal').textContent
 						});
-					} else if(selection=='Low d_low') {
+					} else {
 						uniformsMetal.cspec.value = new THREE.Vector3(
 							cspec.red,
 							cspec.green,
@@ -1186,7 +1280,7 @@
 			var goldMaterial = new goldShader();
 
 			
-			/*function clearGui() {
+			function clearGui() {
 				if ( gui ) gui.destroy();
 				gui = new dat.GUI();
 				gui.open();
@@ -1197,12 +1291,13 @@
 
 				gui.add(textureParameters,'normalScale').min(-3).max(3);
 				gui.add(textureParameters,'roughnessmetal').min(0).max(1);
-			}*/
+				gui.add( toneParameters, 'renderMode', [ 'Renderer', 'Composer' ] );
+			}
 
 			modelLoader("dresser");
 			modelLoader("bigchair31");
 			Start();
-			//buildGui();
+			buildGui();
 			Update();
 			Render();
 
@@ -1275,13 +1370,15 @@
 
 			function unlockFunction() {
 				if(document.getElementsByName('object')[0].checked) {
-					document.getElementById('selector').innerHTML = '<option value="Chair_back">Chair back</option>' +
+					document.getElementById('selector').innerHTML = 
+						'<option value="Chair_back">Chair back</option>' +
 						'<option value="buttons">Chair buttons</option>' +
 						'<option value="Chair_foot">Chair legs</option>';
 					document.getElementById('selectbutton').disabled = false;
 					document.getElementById('selector').disabled = false;
 				} else if(document.getElementsByName('object')[1].checked) {
-					document.getElementById('selector').innerHTML = '<option value="a_low Low">Dresser drawers</option>' +
+					document.getElementById('selector').innerHTML = 
+						'<option value="a_low Low">Dresser drawers</option>' +
 						'<option value="Low d_low">Dresser knobs</option>' +
 						'<option value="legs">Dresser legs</option>' +
 						'<option value="Low b_low">Dresser structure</option>';
@@ -1294,7 +1391,7 @@
 
 			function selectFunction(name) {
 				selection = name;
-				if(name=='a_low Low' || name=='Low b_low') {
+				if(name=='Low b_low') {
 					scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
 						color: 0xff0000,
 						transparent: true,
@@ -1308,17 +1405,45 @@
 						'<option value="Wood08">Cherry wood</option>' ;
 
 				} else if(name=='Chair_back') {
-				scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
-					color: 0xff0000,
-					transparent: true,
-					opacity: 0.3
-				});
-				document.getElementById('applier').innerHTML = 
-					'<option value="brown">Brown leather</option>' +
-					'<option value="red">Red leather</option>' +
-					'<option value="blue">Blue cloth</option>' +
-					'<option value="green">Green fabric</option>' +
-					'<option value="gray">Gray fabric</option>' ;
+					scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+					document.getElementById('applier').innerHTML = 
+						'<option value="brown">Brown leather</option>' +
+						'<option value="red">Red leather</option>' +
+						'<option value="blue">Blue cloth</option>' +
+						'<option value="green">Green fabric</option>' +
+						'<option value="gray">Gray fabric</option>' ;
+				} else if(name=='Low d_low' || name=='a_low Low') {
+					scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+					document.getElementById('applier').innerHTML =
+						'<option value="woood">Wood</option>' +
+						'<option value="gold">Metallic gold</option>' +
+						'<option value="copper">Metallic copper</option>' +
+						'<option value="alum">Metallic aluminium</option>' ;
+				} else if(name=='legs') {
+					scene.getObjectByName("Low c_low").material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+
+					scene.getObjectByName("Low e_low").material = new THREE.MeshBasicMaterial({
+						color: 0xff0000,
+						transparent: true,
+						opacity: 0.3
+					});
+					document.getElementById('applier').innerHTML =
+						'<option value="woood">Wood</option>' +
+						'<option value="gold">Metallic gold</option>' +
+						'<option value="copper">Metallic copper</option>' +
+						'<option value="alum">Metallic aluminium</option>' ;
 				} else {
 					if(name=='buttons') {
 						scene.getObjectByName("Chair_metal").material = new THREE.MeshBasicMaterial({
@@ -1333,20 +1458,7 @@
 							opacity: 0.3
 						});
 
-					} else if(name=='legs') {
-						scene.getObjectByName("Low c_low").material = new THREE.MeshBasicMaterial({
-							color: 0xff0000,
-							transparent: true,
-							opacity: 0.3
-						});
-
-						scene.getObjectByName("Low e_low").material = new THREE.MeshBasicMaterial({
-							color: 0xff0000,
-							transparent: true,
-							opacity: 0.3
-						});
-					
-					} else if(name=='Low d_low' || name=='Chair_foot') {
+					} else if(name=='Chair_foot') {
 						scene.getObjectByName(name).material = new THREE.MeshBasicMaterial({
 							color: 0xff0000,
 							transparent: true,
@@ -1391,6 +1503,7 @@
 					case 'Wood31': 
 					case 'Wood35':
 					case 'Wood08': 
+						dresserWood = name;
 						if(selection=='Chair_foot') textureMaterial.wood(uniformsLegs, name);
 						else if(selection=='legs') {
 							selection = 'Low e_low';
@@ -1400,6 +1513,9 @@
 							selection = 'legs';
 						}
 						else if(selection!='Chair_back' && selection!='buttons') textureMaterial.wood(uniforms, name);
+						break;
+					case 'woood':
+						textureMaterial.wood(uniforms, dresserWood);
 						break;
 					case 'gold':
 						goldMaterial.gold();
