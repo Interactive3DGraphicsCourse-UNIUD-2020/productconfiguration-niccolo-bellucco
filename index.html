@@ -1333,6 +1333,7 @@
 				this.leather = function(img) {
 					selected = scene.getObjectByName(selection);
 					chairLeather = img;
+
 					uniformsChair.diffuseMap.value = textureLoader('textures/leather/'+img+'_col.jpg');
 					uniformsChair.roughnessMap.value = textureLoader('textures/leather/'+img+'_rgh.jpg');
 					uniformsChair.normalMap.value = textureLoader('textures/leather/'+img+'_nrm.jpg');
@@ -1347,9 +1348,11 @@
 
 				this.wood = function(uniforms, img) {
 					selected = scene.getObjectByName(selection);
-					//uniforms.normalMap.value = textureLoader('textures/wood/'+img+'_nrm.jpg');
+
 					uniforms.roughnessMap.value = textureLoader('textures/wood/'+img+'_rgh.jpg');
 					uniforms.diffuseMap.value = textureLoader('textures/wood/'+img+'_col.jpg');
+					uniforms.normalScale.value = new THREE.Vector2(textureParameters.normalScale, textureParameters.normalScale);
+
 					selected.material = new THREE.ShaderMaterial({
 						extensions: materialExtensions,
 						uniforms: uniforms,
@@ -1361,8 +1364,28 @@
 			var textureMaterial = new textureShader();
 
 			var goldShader = function() {
+				this.helper = function(cspec) {
+					if(selection=='a_low Low')
+						this.metalF(uniformsDrawersMetal, cspec);
+					else if(selection=='legs') {
+						selection = 'Low e_low';
+						this.metalF(uniformsMetal, cspec);
+						selection = 'Low c_low';
+						this.metalF(uniformsMetal, cspec);
+						selection = 'legs';
+					} else if(selection=='Chair_foot')
+						this.metalF(uniformsLegsMetal, cspec);
+					else if(selection=='buttons') {
+						selection='Chair_metal';
+						this.metalF(uniformsChairMetal, cspec);
+						selection='Chair_button';
+						this.metalF(uniformsChairMetal, cspec);
+						selection='buttons';
+					} else
+						this.metalF(uniformsMetal, cspec);
+				}
+
 				this.metalF = function(uniforms, cspec) {
-					
 					selected = scene.getObjectByName(selection);
 					uniforms.cspec.value = new THREE.Vector3(
 						cspec.red,
@@ -1377,11 +1400,13 @@
 					});
 				}
 			};
-			var goldMaterial = new goldShader();
+			var metalMaterial = new goldShader();
 
 			var plasticShader = function() {
 				this.plastic = function(uniforms) {
 					selected = scene.getObjectByName(selection);
+					uniforms.normalScale.value = new THREE.Vector2(textureParameters.normalScaleMetal, textureParameters.normalScaleMetal);
+
 					uniforms.cdiff.value = new THREE.Vector3(
 						cdiffpl.red,
 						cdiffpl.green,
@@ -1644,9 +1669,9 @@
 
 					document.getElementById('applier').innerHTML =
 						'<option value="chair">Chair fabric</option>' +
+						'<option value="plastic">Colored plastic</option>' +
 						'<option value="gold">Metallic gold</option>' +
 						'<option value="copper">Metallic copper</option>' +
-						'<option value="plastic">Colored plastic</option>' +
 						'<option value="alum">Metallic aluminium</option>' ;
 				//gambe poltrona
 				} else if(name=='Chair_foot') {
@@ -1675,9 +1700,9 @@
 
 			function applyFunction(name) {
 				switch(name) {
+					case 'Leather01':
 					case 'Leather05':
 					case 'Fabric30': 
-					case 'Leather01':
 					case 'Fabric23': 
 					case 'Fabric27': 
 						textureMaterial.leather(name);
@@ -1696,14 +1721,8 @@
 					case 'Wood31': 
 					case 'Wood35':
 					case 'Wood08': 
-						dresserWood = name;
-						if(selection=='legs') {
-							selection = 'Low e_low';
-							textureMaterial.wood(uniforms, name);
-							selection = 'Low c_low';
-							textureMaterial.wood(uniforms, name);
-							selection = 'legs';
-						} else if(selection=='a_low Low')
+						selection=='Low b_low' ? dresserWood = name : null;
+						if(selection=='a_low Low')
 							textureMaterial.wood(uniformsDrawers, name);
 						else if(selection=='Chair_foot') 
 							textureMaterial.wood(uniformsLegs, name);
@@ -1711,14 +1730,14 @@
 							textureMaterial.wood(uniforms, name);
 						break;
 					case 'woood':
-							if(selection=='legs') {
-								selection = 'Low e_low';
-								textureMaterial.wood(uniforms, dresserWood);
-								selection = 'Low c_low';
-								textureMaterial.wood(uniforms, dresserWood);
-								selection = 'legs';
-							} else 
-								textureMaterial.wood(uniforms, dresserWood);
+						if(selection=='legs') {
+							selection = 'Low e_low';
+							textureMaterial.wood(uniforms, dresserWood);
+							selection = 'Low c_low';
+							textureMaterial.wood(uniforms, dresserWood);
+							selection = 'legs';
+						} else 
+							textureMaterial.wood(uniforms, dresserWood);
 						break;
 					case 'plastic':
 						if(selection=='a_low Low')
@@ -1740,66 +1759,14 @@
 						} else
 							plasticMaterial.plastic(uniforms);
 						break;
-						break;
 					case 'gold':
-						if(selection=='a_low Low')
-							goldMaterial.metalF(uniformsDrawersMetal, cspecgold);
-						else if(selection=='legs') {
-							selection = 'Low e_low';
-							goldMaterial.metalF(uniformsMetal, cspecgold);
-							selection = 'Low c_low';
-							goldMaterial.metalF(uniformsMetal, cspecgold);
-							selection = 'legs';
-						} else if(selection=='Chair_foot')
-							goldMaterial.metalF(uniformsLegsMetal, cspecgold);
-						else if(selection=='buttons') {
-							selection='Chair_metal';
-							goldMaterial.metalF(uniformsChairMetal, cspecgold);
-							selection='Chair_button';
-							goldMaterial.metalF(uniformsChairMetal, cspecgold);
-							selection='buttons';
-						} else
-							goldMaterial.metalF(uniformsMetal, cspecgold);
+						metalMaterial.helper(cspecgold);
 						break;
 					case 'copper':
-						if(selection=='a_low Low')
-							goldMaterial.metalF(uniformsDrawersMetal, cspeccopper);
-						else if(selection=='legs') {
-							selection = 'Low e_low';
-							goldMaterial.metalF(uniformsMetal, cspeccopper);
-							selection = 'Low c_low';
-							goldMaterial.metalF(uniformsMetal, cspeccopper);
-							selection = 'legs';
-						} else if(selection=='Chair_foot')
-							goldMaterial.metalF(uniformsLegsMetal, cspeccopper);
-						else if(selection=='buttons') {
-							selection='Chair_metal';
-							goldMaterial.metalF(uniformsChairMetal, cspeccopper);
-							selection='Chair_button';
-							goldMaterial.metalF(uniformsChairMetal, cspeccopper);
-							selection='buttons';
-						} else
-							goldMaterial.metalF(uniformsMetal, cspeccopper);
+						metalMaterial.helper(cspeccopper);
 						break;
 					case 'alum':
-						if(selection=='a_low Low')
-							goldMaterial.metalF(uniformsDrawersMetal, cspecalum);
-						else if(selection=='legs') {
-							selection = 'Low e_low';
-							goldMaterial.metalF(uniformsMetal, cspecalum);
-							selection = 'Low c_low';
-							goldMaterial.metalF(uniformsMetal, cspecalum);
-							selection = 'legs';
-						} else if(selection=='Chair_foot')
-							goldMaterial.metalF(uniformsLegsMetal, cspecalum);
-						else if(selection=='buttons') {
-							selection='Chair_metal';
-							goldMaterial.metalF(uniformsChairMetal, cspecalum);
-							selection='Chair_button';
-							goldMaterial.metalF(uniformsChairMetal, cspecalum);
-							selection='buttons';
-						} else
-							goldMaterial.metalF(uniformsMetal, cspecalum);
+						metalMaterial.helper(cspecalum);
 						break;
 				}
 
