@@ -83,3 +83,9 @@ Tonemapping per risaltare i mobili come luce in studio.
 * **4 febbraio 2020**
 Separazione della mesh dei cassetti dal resto della cassettiera, per permettere più personalizzazione.
 ![](report/33.png)
+
+* **5 febbario 2020**
+Nuova prospettiva della camera per miglior visuale, aggiunto un pivot anche per rotazione della poltrona.
+
+Aggiunto shader per materiale plastico.
+![](report/34.png)
