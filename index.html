@@ -25,12 +25,12 @@
 				<div class='menu col-sm-3'>
 					<div >
 						<div ><label class='label' >Chair rotation:</label><label id='chairR'></label></div>
-						<div ><input type='range' min='0' max='360' value='105' class="slider" id='rotchair' oninput='rotate(event)' /></div>
+						<div ><input type='range' min='0' max='360' value='0' class="slider" id='rotchair' oninput='rotate(event)' /></div>
 					</div>
 					<br/>
 					<div >
 						<div ><label class='label'>Dresser rotation:</label><label id='dresserR'></label></div>
-						<div ><input type='range' min='0' max='360' value='55' class="slider" id='rotdresser' oninput='rotate(event)'/></div>
+						<div ><input type='range' min='0' max='360' value='0' class="slider" id='rotdresser' oninput='rotate(event)'/></div>
 					</div>
 
 					<hr/>
@@ -588,9 +588,12 @@
 	 			vec3 envLight = textureCubeLodEXT( envMap, vec3(-r.x, r.yz), specularMIPLevel ).rgb;
 				envLight = pow( envLight, vec3(2.2));
 
+				vec3 irradiance = textureCube( irradianceMap, wNormal).rgb;
+				irradiance = pow( irradiance, vec3(2.2));
+
 				vec3 sBRDF = BRDF_Specular_GGX_Environment(n, v, cspec, roughness);
 
-				vec3 outRadiance = ( (BRDF*nDotl*clight) + (nDotl2*BRDF2*clight2) + (nDotl3*BRDF3*clight3) ) * PI + sBRDF * envLight;
+				vec3 outRadiance = (BRDF*nDotl*clight + BRDF3*clight3*nDotl3 + sBRDF*irradiance*cdiff) * PI;
 
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
 			}
@@ -616,15 +619,16 @@
 			var selection = '';
 			var loadedChair = false;
 			var loadedDresser = false;
-			var dresserWood = 'Wood26';
-			var chairLeather = 'Leather05'
+			var loading = true;
+			var dresserWood = 'Wood00';
+			var chairLeather = 'Fabric23'
 
 			//parametri di illuminazione
 			var lightParameters = {
 				red: 1.0,
 				green: 1.0,
 				blue: 0.6,
-				intensity: 1.0,
+				intensity: 0.8,
 			};
 			var lightParameters2 = {
 				red: 1.0,
@@ -641,9 +645,9 @@
 
 			//parametri per materiali plastici
 			var cdiffpl = {
-				red: 0.5,
-				green: 0.5,
-				blue: 0.5
+				red: 1,
+				green: 1,
+				blue: 1
 			}
 
 			//parametri per materiali metallici
@@ -666,17 +670,17 @@
 			//texture iniziali per i diversi oggetti
 			//cassettiera
 			var normalMap = textureLoader('textures/dresser/normal.png');
-			var diffuseMap = textureLoader('textures/wood/Wood26_col.jpg');
-			var roughnessMap = textureLoader('textures/wood/Wood26_rgh.jpg');
+			var diffuseMap = textureLoader('textures/wood/'+dresserWood+'_col.jpg');
+			var roughnessMap = textureLoader('textures/wood/'+dresserWood+'_rgh.jpg');
 
 			//seduta della poltrona
-			var normalMapChair = textureLoader('textures/leather/Leather05_nrm.jpg');
-			var diffuseMapChair = textureLoader('textures/leather/Leather05_col.jpg');
-			var roughnessMapChair = textureLoader('textures/leather/Leather05_rgh.jpg');
+			var normalMapChair = textureLoader('textures/leather/'+chairLeather+'_nrm.jpg');
+			var diffuseMapChair = textureLoader('textures/leather/'+chairLeather+'_col.jpg');
+			var roughnessMapChair = textureLoader('textures/leather/'+chairLeather+'_rgh.jpg');
 
 			//gambe della poltrona
 			var normalMapLegs = textureLoader('textures/bigchair/Wnormal.png');
-			var diffuseMapLegs = textureLoader('textures/bigchair/Wchair.jpg');
+			var diffuseMapLegs = textureLoader('textures/wood/'+dresserWood+'_col.jpg');
 			var roughnessMapLegs = textureLoader('textures/bigchair/Wrough.png');
 
 			var loader = new THREE.CubeTextureLoader();
@@ -712,7 +716,7 @@
 			//parametri globali per materiali
 			var textureParameters = {
 				normalScale: 1.1,
-				normalScaleMetal: 0.2,
+				normalScaleMetal: 0.005,
 				roughness: 0.65,
 				roughnessmetal: 0.3,
 				repeatS: 1.0,
@@ -727,8 +731,10 @@
 
 			//rotazione degli oggetti nella scena
 			var rotationParameters = {
-				chairR: 105.0,
-				dresserR: 55.0
+				chairR: 0.0,
+				dresserR: 0.0,
+				baseRchair: 220.0,
+				baseRdresser: 55.0
 			}
 
 			var cl = new THREE.Vector3(
@@ -942,7 +948,7 @@
 				
 				scene = new THREE.Scene();
 
-				/*stats = new Stats();
+				/*ts = new Stats();
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';
 				container.appendChild( stats.domElement );*/
@@ -957,8 +963,10 @@
 
 				container.appendChild( renderer.domElement );
 				renderer.setPixelRatio( window.devicePixelRatio );
+
 				renderer.shadowMap.enabled = true;
-				renderer.shadowMap.type = THREE.PCFShadowMap;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
 				renderer.setSize(container.clientWidth, container.clientWidth / (window.innerWidth/window.innerHeight));
 
 				renderer.toneMapping = THREE.CineonToneMapping;
@@ -1080,8 +1088,9 @@
 			}
 
 			function Render() {
-				if(loadedChair || loadedDresser) {
 
+				if(loading) {
+					//console.log('loading');
 					mesh.name == 'dresser' ? pivot.add(mesh) : pivot2.add(mesh);
 
 					for(i=0; i<scene.children.length; i++) {
@@ -1089,25 +1098,32 @@
 						if(scene.children[i].name == 'pivot2'){
 							//scene.children[i].position.set(15,-17,-7)
 							scene.children[i].children[0].position.set(4,3,-2);
-							scene.children[i].rotation.x = 0;
+
+							/*scene.children[i].rotation.x = 0;
 							scene.children[i].rotation.z = 0;
-							scene.children[i].rotation.y = rotationParameters.chairR * 3.14159 /180;
-							//scene.children[i].rotation.z = 60 * 3.14159 / 180;
-							//scene.children[i].rotation.x = - 90 * 3.14159 / 180;
-							scene.children[i].rotateOnWorldAxis(new THREE.Vector3(0,1,0), rotationParameters.chairR * 3.14159 /180 );
+							scene.children[i].rotation.y = rotationParameters.chairR * 3.14159 /180;*/
+							//scene.children[i].children[0].rotateOnWorldAxis(new THREE.Vector3(0,1,0), rotationParameters.chairR * 3.14159 /180 );
 						
 						} else if(scene.children[i].name == 'pivot') {
 							scene.children[i].children[0].position.set(0, 0, -10);
 
-							scene.children[i].rotation.x = 0;
+							/*scene.children[i].rotation.x = 0;
 							scene.children[i].rotation.z = 0;
-							scene.children[i].rotation.y = rotationParameters.dresserR * 3.14159 /180;
+							scene.children[i].rotation.y = rotationParameters.dresserR * 3.14159 /180;*/
 						}
 					}
-
-					lightMesh.target = pivot;
-					lightMesh2.target = mesh;
-					
+					loading = !(loadedDresser&&loadedChair);
+						
+				} else if(!loading) {
+					//console.log('loaded');
+					for(i=0; i<scene.children.length; i++) {
+						if(scene.children[i].name == 'pivot2'){
+							scene.children[i].rotation.y = (rotationParameters.chairR+rotationParameters.baseRchair) * 3.14159 /180;
+							
+						} else if(scene.children[i].name == 'pivot') {
+							scene.children[i].rotation.y = (rotationParameters.dresserR+rotationParameters.baseRdresser) * 3.14159 /180;
+						}
+					}
 				}
 
 				document.getElementById('chairR').innerHTML = (rotationParameters.chairR).toString().substr(0,5);
@@ -1467,38 +1483,34 @@
 								});
 
 								if(mesh.children[i].name == 'Chair_foot') {
-								uniformsLegsMetal.cspec.value = new THREE.Vector3(cspecgold.red,cspecgold.green,cspecgold.blue);
-
+									uniformsLegs.normalScale.value = new THREE.Vector2(textureParameters.normalScaleMetal, textureParameters.normalScaleMetal);
 									mesh.children[i].material = new THREE.ShaderMaterial({
 										extensions: materialExtensions,
-										uniforms: uniformsLegsMetal,
+										uniforms: uniformsLegs,
+										vertexShader: document.getElementById('vs').textContent,
+										fragmentShader: document.getElementById('fs_plastic').textContent
+									});
+								}
+
+								uniformsChairMetal.cspec.value = new THREE.Vector3(cspecgold.red,cspecgold.green,cspecgold.blue);
+								if(mesh.children[i].name == 'Chair_metal') {
+									mesh.children[i].material = new THREE.ShaderMaterial({
+										extensions: materialExtensions,
+										uniforms: uniformsChairMetal,
 										vertexShader: document.getElementById('vs').textContent,
 										fragmentShader: document.getElementById('fs_metal').textContent
 									});
 								}
-								if(mesh.children[i].name == 'Chair_metal') {
-								uniformsLegsMetal.cspec.value = new THREE.Vector3(cspecgold.red,cspecgold.green,cspecgold.blue);
-
-									mesh.children[i].material = new THREE.ShaderMaterial({
-										extensions: materialExtensions,
-										uniforms: uniformsChair,
-										vertexShader: document.getElementById('vs').textContent,
-										fragmentShader: document.getElementById('fs_plastic').textContent
-									});
-								}
 								if(mesh.children[i].name == 'Chair_button') {
-								uniformsLegsMetal.cspec.value = new THREE.Vector3(cspecgold.red,cspecgold.green,cspecgold.blue);
-
 									mesh.children[i].material = new THREE.ShaderMaterial({
 										extensions: materialExtensions,
-										uniforms: uniformsChair,
+										uniforms: uniformsChairMetal,
 										vertexShader: document.getElementById('vs').textContent,
-										fragmentShader: document.getElementById('fs_plastic').textContent
+										fragmentShader: document.getElementById('fs_metal').textContent
 									});
 								}
 
 							} else if (name=='dresser') {
-								
 								mesh.children[i].material = new THREE.ShaderMaterial({
 									extensions: materialExtensions,
 									uniforms: uniforms,
@@ -1507,18 +1519,7 @@
 								});
 
 								if(mesh.children[i].name == 'a_low Low') {
-								uniformsLegsMetal.cspec.value = new THREE.Vector3(cspecgold.red,cspecgold.green,cspecgold.blue);
-
-									mesh.children[i].material = new THREE.ShaderMaterial({
-										extensions: materialExtensions,
-										uniforms: uniformsDrawers,
-										vertexShader: document.getElementById('vs').textContent,
-										fragmentShader: document.getElementById('fs_texture').textContent
-									});
-								}
-								if(mesh.children[i].name == 'Low d_low') {
-								uniformsLegsMetal.cspec.value = new THREE.Vector3(cspecgold.red,cspecgold.green,cspecgold.blue);
-
+									uniformsDrawers.normalScale.value = new THREE.Vector2(textureParameters.normalScaleMetal, textureParameters.normalScaleMetal);
 									mesh.children[i].material = new THREE.ShaderMaterial({
 										extensions: materialExtensions,
 										uniforms: uniformsDrawers,
@@ -1526,15 +1527,32 @@
 										fragmentShader: document.getElementById('fs_plastic').textContent
 									});
 								}
+
+								if(mesh.children[i].name == 'Low d_low') {
+									uniformsMetal.cspec.value = new THREE.Vector3(cspecgold.red,cspecgold.green,cspecgold.blue);
+
+									mesh.children[i].material = new THREE.ShaderMaterial({
+										extensions: materialExtensions,
+										uniforms: uniformsMetal,
+										vertexShader: document.getElementById('vs').textContent,
+										fragmentShader: document.getElementById('fs_metal').textContent
+									});
+									
+								}
 							}
 
 							mesh.children[i].castShadow = true;
-							mesh.children[i].receiveShadow = false;
+							mesh.children[i].receiveShadow = true;
 
 							//objects.push(mesh.children[i]);
 						}
 
-						name=='bigchair31' ? loadedChair = true : loadedDresser = true;
+						if(name=='bigchair31') {
+							loadedChair = true;
+						} else {
+							loadedDresser = true;
+						}
+
 				} );
 			}
 
@@ -1651,9 +1669,9 @@
 					document.getElementById('applier').innerHTML = 
 						'<option value="Leather01">Brown leather</option>' +
 						'<option value="Leather05">Red leather</option>' +
+						'<option value="Leather08">Black leather</option>' +
 						'<option value="Fabric23">Blue cloth</option>' +
-						'<option value="Fabric27">Green fabric</option>' +
-						'<option value="Fabric30">Gray fabric</option>' ;
+						'<option value="Fabric27">Green fabric</option>';
 				//bottoni poltrona
 				} else if(name=='buttons') {
 					scene.getObjectByName("Chair_metal").material = new THREE.MeshBasicMaterial({
@@ -1702,7 +1720,7 @@
 				switch(name) {
 					case 'Leather01':
 					case 'Leather05':
-					case 'Fabric30': 
+					case 'Leather08': 
 					case 'Fabric23': 
 					case 'Fabric27': 
 						textureMaterial.leather(name);
