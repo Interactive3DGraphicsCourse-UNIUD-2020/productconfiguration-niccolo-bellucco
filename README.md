@@ -17,4 +17,10 @@ Il risultato finale è un visualizer che propone a schermo due ipotetici pezzi d
 
 Le texture dei materiali (legno e pelle) sono prese da https://www.cc0textures.com/ e https://www.wood-database.com/ come texture con licenza libera, poi applicate trammite lo shader programmato. Mentre i materiali metallici e quello plastico sono realizzati unicamente tramite shader custom.
 
-La selezione 
+Il componente selezionato tramite linterfaccia viene evidenziato in colore rosso. Dopo la selezione e la conferma del materiale, verrà renderizzato nuovamente con il materiale assegnato. I materiali disponibili per i diversi componenti sono:
+
+- Legno (nocciolo, ebano, faggio o ulivo)
+- Pelle (marrone o rossa)
+- Tessuto (blue o verde chiaro)
+- Metallo (dorato, rame, alluminio)
+- Plastica (di colore bianco)
