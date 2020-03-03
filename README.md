@@ -32,3 +32,7 @@ Il componente selezionato tramite linterfaccia viene evidenziato in colore rosso
 ## Esempi di render e risultato di combinazione dei materiali:
 ![](report/render1.png)
 ![](report/render2.png)
+
+## Environment
+
+L'environment map, utilizzata anche per realizzare i riflessi nei materiali metallici, è presa da https://hdrihaven.com/hdri/?c=indoor&h=cayley_interior . E' stata scelta perchè l'obiettivo era ricreare un ambiente interno, dove il cliente potesse visualizzare i mobili scelti in modo consono, ma anche che potesse trasmettere una certa luminosità senza essere un posto chiuso (o troppo astratto come quello creato da luci da studio fotografico).
