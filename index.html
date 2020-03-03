@@ -90,12 +90,6 @@
 		<!-- <script src='libs\GLTFLoader.js'></script> -->
 		<script src='libs\dat.gui.min.js'></script>
 		<!-- <script src='libs\BufferGeometryUtils.js'></script> -->
-		<script src='libs\EffectComposer.js'></script>
-		<script src='libs\RenderPass.js'></script>
-		<script src='libs\BokehPass.js'></script>
-		<script src='libs\BokehShader.js'></script>
-		<script src='libs\CopyShader.js'></script>
-		<script src='libs\ShaderPass.js'></script>
 		<script src='libs\SceneUtils.js'></script>
 
 		<script type='text/x-glsl' id='vs'>
@@ -608,10 +602,6 @@
 			var lightMesh, lightMesh2, lightMesh3;
 			var textureCube, cubescene, mesh, pivot, pivot;
 
-			//variabili per selezione con mouse
-			//var objects = new Array();
-			//var raycaster = new THREE.Raycaster();
-
 			//contenitore canvas
 			var container = document.getElementById('container');
 
@@ -949,11 +939,6 @@
 				
 				scene = new THREE.Scene();
 
-				/*ts = new Stats();
-				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '0px';
-				container.appendChild( stats.domElement );*/
-
 				camera.position.set( 20, 15, 65 );
 				scene.add( camera );
 				
@@ -977,7 +962,6 @@
 
 				cubescene = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(80, 80, 80),
-					//new THREE.MeshPhongMaterial({color: 0xffffff, side: THREE.BackSide})
 					textureEnvironment
 				);
 				cubescene.position.set(0, 20, 0);
@@ -1000,11 +984,6 @@
 
 				//prima luce leggermente gialla da interno
 				lightMesh = new THREE.PointLight(0xffffa0, lightParameters.intensity, 400);
-				/*var sp = new THREE.Mesh( 
-					new THREE.SphereBufferGeometry( 2, 8, 8),
-					new THREE.MeshBasicMaterial ({color: 0xff0000, wireframe:true})
-				);
-				lightMesh.add(sp);*/
 				lightMesh.position.set( -23, 57, 20 );
 				lightMesh.castShadow = true;
 				lightMesh.shadow.radius = 6;
@@ -1016,7 +995,6 @@
 
 				//seconda luce non casta ombra per non creare confusione dato che arriva dalla stessa direzione della prima
 				lightMesh2 = new THREE.PointLight(0xffffa0, lightParameters2.intensity,  400);
-				//lightMesh2.position.set( 0, 57, -10 );
 				lightMesh2.position.set(17, -18, 10);
 				var sp2 = new THREE.Mesh( 
 					new THREE.SphereBufferGeometry( 2,8,8),
@@ -1028,11 +1006,6 @@
 
 				//terza luce proveniente dall'esterno, bianca come luce solare
 				lightMesh3 = new THREE.PointLight(0xffffff, lightParameters3.intensity, 400);
-				/*var sp3 = new THREE.Mesh( 
-					new THREE.SphereBufferGeometry(2,8,8),
-					new THREE.MeshBasicMaterial ({color: 0x0000ff, wireframe:true})
-				);
-				lightMesh3.add(sp3);*/
 				lightMesh3.position.set( 40, 30, 0 );
 				lightMesh3.castShadow = true;
 				lightMesh3.shadow.radius = 6;
@@ -1045,40 +1018,11 @@
 				//aggiornamento parametri posizione delle luci
 				updateUniformsLights();
 
-				//scene.background = textureCube;
-				//document.addEventListener( 'mousedown', onDocumentMouseDown );
 				controls.update();
 			}
 
-		
-			//funzione per il funzionamento della selezione con click, tramite raytracing
-			/*function onDocumentMouseDown( event ) {    
-				//event.preventDefault();
-				var mouse3D = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1,   
-					-( event.clientY / window.innerHeight ) * 2 + 1,  
-					0.5 );     
-				
-				raycaster.setFromCamera( mouse3D, camera );
-				var intersects = raycaster.intersectObjects( objects);
-				
-				if ( intersects.length > 0 ) {
-					console.log(intersects[0].object.name);
-					selection = intersects[0].object.name;
-
-					scene.getObjectByName(selection).material = new THREE.MeshBasicMaterial({
-						color: 0xff0000,
-						transparent: true,
-						opacity: 0.3
-					});
-					
-				} else {
-					console.log(selection);
-				}
-			}*/
-
 			function Update(time) {
 				time *= 0.001;
-				//pivot.rotation.y = time;
 				requestAnimationFrame(Update);
 				//stats.update();
 				Render();
@@ -1087,32 +1031,20 @@
 			function Render() {
 
 				if(loading) {
-					//console.log('loading');
 					mesh.name == 'dresser' ? pivot.add(mesh) : pivot2.add(mesh);
 
 					for(i=0; i<scene.children.length; i++) {
 						
 						if(scene.children[i].name == 'pivot2'){
-							//scene.children[i].position.set(15,-17,-7)
 							scene.children[i].children[0].position.set(4,3,-2);
-
-							/*scene.children[i].rotation.x = 0;
-							scene.children[i].rotation.z = 0;
-							scene.children[i].rotation.y = rotationParameters.chairR * 3.14159 /180;*/
-							//scene.children[i].children[0].rotateOnWorldAxis(new THREE.Vector3(0,1,0), rotationParameters.chairR * 3.14159 /180 );
 						
 						} else if(scene.children[i].name == 'pivot') {
 							scene.children[i].children[0].position.set(0, 0, -10);
-
-							/*scene.children[i].rotation.x = 0;
-							scene.children[i].rotation.z = 0;
-							scene.children[i].rotation.y = rotationParameters.dresserR * 3.14159 /180;*/
 						}
 					}
 					loading = !(loadedDresser&&loadedChair);
 						
 				} else if(!loading) {
-					//console.log('loaded');
 					for(i=0; i<scene.children.length; i++) {
 						if(scene.children[i].name == 'pivot2'){
 							scene.children[i].rotation.y = (rotationParameters.chairR+rotationParameters.baseRchair) * 3.14159 /180;
@@ -1125,200 +1057,12 @@
 
 				document.getElementById('chairR').innerHTML = (rotationParameters.chairR).toString().substr(0,5);
 				document.getElementById('dresserR').innerHTML = (rotationParameters.dresserR).toString().substr(0,5);
-				
-				//updateUniforms();
-				//updateUniformsChair();
-				//updateUniformsLegs();
 
 				renderer.render(scene, camera);
 			}
 
 			//per come sono gestiti i materiali, essendo molteplici e su diversi oggetti,
 			//non serve eseguire ad ogni passata l'aggiornamento delle uniform, ma solo quando necessario
-			/*
-			function updateUniforms() {
-				//aggiorna parametri della componente con texture
-				uniforms.pointLightPosition.value = new THREE.Vector3(
-					lightMesh.position.x,
-					lightMesh.position.y,
-					lightMesh.position.z
-				);
-				uniforms.clight.value = new THREE.Vector3(
-					lightParameters.red * lightParameters.intensity,
-					lightParameters.green * lightParameters.intensity,
-					lightParameters.blue * lightParameters.intensity
-				);
-				uniforms.clight2.value = new THREE.Vector3(
-					lightParameters2.red * lightParameters2.intensity,
-					lightParameters2.green * lightParameters2.intensity,
-					lightParameters2.blue * lightParameters2.intensity
-				);
-				uniforms.clight3.value = new THREE.Vector3(
-					lightParameters3.red * lightParameters3.intensity,
-					lightParameters3.green * lightParameters3.intensity,
-					lightParameters3.blue * lightParameters3.intensity
-				);
-				uniforms.textureRepeat.value = new THREE.Vector2( 
-					textureParameters.repeatS, 
-					textureParameters.repeatT
-				);
-				uniforms.normalScale.value = new THREE.Vector2( 
-					textureParameters.normalScale, 
-					textureParameters.normalScale 
-				);
-
-				//aggiorna parametri della componente metallica
-				uniformsMetal.pointLightPosition.value = new THREE.Vector3(
-					lightMesh.position.x,
-					lightMesh.position.y,
-					lightMesh.position.z
-				);
-				uniformsMetal.clight.value = new THREE.Vector3(
-					lightParameters.red * lightParameters.intensity,
-					lightParameters.green * lightParameters.intensity,
-					lightParameters.blue * lightParameters.intensity
-				);
-				uniformsMetal.clight2.value = new THREE.Vector3(
-					lightParameters2.red * lightParameters2.intensity,
-					lightParameters2.green * lightParameters2.intensity,
-					lightParameters2.blue * lightParameters2.intensity
-				);
-				uniformsMetal.clight3.value = new THREE.Vector3(
-					lightParameters3.red * lightParameters3.intensity,
-					lightParameters3.green * lightParameters3.intensity,
-					lightParameters3.blue * lightParameters3.intensity
-				);
-				uniformsMetal.normalScale.value = new THREE.Vector2( 
-					textureParameters.normalScale, 
-					textureParameters.normalScale 
-				);
-				uniformsMetal.roughness.value = textureParameters.roughnessmetal;
-			}
-
-			function updateUniformsChair() {
-				//aggiorna parametri della componente con texture
-				uniformsChair.pointLightPosition.value = new THREE.Vector3(
-					lightMesh.position.x,
-					lightMesh.position.y,
-					lightMesh.position.z
-				);
-				uniformsChair.clight.value = new THREE.Vector3(
-					lightParameters.red * lightParameters.intensity,
-					lightParameters.green * lightParameters.intensity,
-					lightParameters.blue * lightParameters.intensity
-				);
-				uniformsChair.clight2.value = new THREE.Vector3(
-					lightParameters2.red * lightParameters2.intensity,
-					lightParameters2.green * lightParameters2.intensity,
-					lightParameters2.blue * lightParameters2.intensity
-				);
-				uniformsChair.clight3.value = new THREE.Vector3(
-					lightParameters3.red * lightParameters3.intensity,
-					lightParameters3.green * lightParameters3.intensity,
-					lightParameters3.blue * lightParameters3.intensity
-				);
-				uniformsChair.textureRepeat.value = new THREE.Vector2( 
-					textureParameters.repeatS, 
-					textureParameters.repeatT
-				);
-				uniformsChair.normalScale.value = new THREE.Vector2( 
-					textureParameters.normalScale, 
-					textureParameters.normalScale 
-				);
-
-				//aggiorna parametri della componente metallica
-				uniformsChairMetal.pointLightPosition.value = new THREE.Vector3(
-					lightMesh.position.x,
-					lightMesh.position.y,
-					lightMesh.position.z
-				);
-				uniformsChairMetal.clight.value = new THREE.Vector3(
-					lightParameters.red * lightParameters.intensity,
-					lightParameters.green * lightParameters.intensity,
-					lightParameters.blue * lightParameters.intensity
-				);
-				uniformsChairMetal.clight2.value = new THREE.Vector3(
-					lightParameters2.red * lightParameters2.intensity,
-					lightParameters2.green * lightParameters2.intensity,
-					lightParameters2.blue * lightParameters2.intensity
-				);
-				uniformsChairMetal.clight3.value = new THREE.Vector3(
-					lightParameters3.red * lightParameters3.intensity,
-					lightParameters3.green * lightParameters3.intensity,
-					lightParameters3.blue * lightParameters3.intensity
-				);
-				uniformsChairMetal.normalScale.value = new THREE.Vector2( 
-					textureParameters.normalScale, 
-					textureParameters.normalScale 
-				);
-				uniformsChairMetal.roughness.value = textureParameters.roughnessmetal;
-			}
-
-			function updateUniformsLegs() {
-				uniformsLegs.pointLightPosition.value = new THREE.Vector3(
-					lightMesh.position.x,
-					lightMesh.position.y,
-					lightMesh.position.z
-				);
-				uniformsLegsMetal.pointLightPosition.value = new THREE.Vector3(
-					lightMesh.position.x,
-					lightMesh.position.y,
-					lightMesh.position.z
-				);
-
-				uniformsLegs.clight.value = new THREE.Vector3(
-					lightParameters.red * lightParameters.intensity,
-					lightParameters.green * lightParameters.intensity,
-					lightParameters.blue * lightParameters.intensity
-				);
-				uniformsLegs.clight2.value = new THREE.Vector3(
-					lightParameters2.red * lightParameters2.intensity,
-					lightParameters2.green * lightParameters2.intensity,
-					lightParameters2.blue * lightParameters2.intensity
-				);
-				uniformsLegs.clight3.value = new THREE.Vector3(
-					lightParameters3.red * lightParameters3.intensity,
-					lightParameters3.green * lightParameters3.intensity,
-					lightParameters3.blue * lightParameters3.intensity
-				);
-				uniformsLegsMetal.clight.value = new THREE.Vector3(
-					lightParameters.red * lightParameters.intensity,
-					lightParameters.green * lightParameters.intensity,
-					lightParameters.blue * lightParameters.intensity
-				);
-				uniformsLegsMetal.clight2.value = new THREE.Vector3(
-					lightParameters2.red * lightParameters2.intensity,
-					lightParameters2.green * lightParameters2.intensity,
-					lightParameters2.blue * lightParameters2.intensity
-				);
-				uniformsLegsMetal.clight3.value = new THREE.Vector3(
-					lightParameters3.red * lightParameters3.intensity,
-					lightParameters3.green * lightParameters3.intensity,
-					lightParameters3.blue * lightParameters3.intensity
-				);
-
-				uniformsLegs.textureRepeat.value = new THREE.Vector2( 
-					textureParameters.repeatS, 
-					textureParameters.repeatT
-				);
-
-				//uniformsLegs.specularMap.value = specularMapLegs;
-				//uniformsLegs.diffuseMap.value = diffuseMapLegs;
-				//uniformsLegs.roughnessMap.value = roughnessMapLegs;
-
-				//uniformsLegs.normalMap.value = normalMapLegs;
-				uniformsLegs.normalScale.value = new THREE.Vector2( 
-					textureParameters.normalScale, 
-					textureParameters.normalScale 
-				);
-				//uniformsLegsMetal.normalMap.value = normalMapLegs;
-				uniformsLegsMetal.normalScale.value = new THREE.Vector2( 
-					textureParameters.normalScale, 
-					textureParameters.normalScale 
-				);
-
-				uniformsLegsMetal.roughness.value = textureParameters.roughnessmetal;
-			}*/
 
 			function updateUniformsLights() {
 				uniforms.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,lightMesh.position.y,lightMesh.position.z);
@@ -1441,24 +1185,9 @@
 			};
 			var plasticMaterial = new plasticShader();
 
-			//interfaccia dat gui usata in sviluppo ma non più necessaria a prodotto finito
-			/*function clearGui() {
-				if ( gui ) gui.destroy();
-				gui = new dat.GUI();
-				gui.open();
-			}
-
-			function buildGui() {
-				clearGui();
-
-				gui.add(textureParameters,'normalScale').min(-3).max(3);
-				gui.add(textureParameters,'roughnessmetal').min(0).max(1);
-			}*/
-
 			modelLoader("dresser");
 			modelLoader("bigchair31");
 			Start();
-			//buildGui();
 			Update();
 			Render();
 
