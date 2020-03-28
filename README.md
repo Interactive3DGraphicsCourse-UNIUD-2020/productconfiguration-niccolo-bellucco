@@ -36,3 +36,8 @@ Il componente selezionato tramite linterfaccia viene evidenziato in colore rosso
 ## Environment
 
 L'environment map, utilizzata anche per realizzare i riflessi nei materiali metallici, è presa da https://hdrihaven.com/hdri/?c=indoor&h=cayley_interior . E' stata scelta perchè l'obiettivo era ricreare un ambiente interno, dove il cliente potesse visualizzare i mobili scelti in modo consono, ma anche che potesse trasmettere una certa luminosità senza essere un posto chiuso (o troppo astratto come quello creato da luci da studio fotografico).
+Da questa è stata derivata un'irradiance map applicando un pesante filtro di blur a tutte le facce della cubemap.
+
+Infine però è stato scelto un background neutro, per risaltare meglio gli oggetti per motivi di illuminazione. Tuttavia l'evironment map e l'irradiance map sono tenute invariate per il calcolo dei riflessi.
+
+![](report/studio.png)
