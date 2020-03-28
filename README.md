@@ -1,5 +1,7 @@
 # PRODUCT CONFIGURATION PROJECT
 
+![](report/studio.png)
+
 Il progetto consiste nella realizzazione di un prototipo di visualizer di prodotti online.
 
 La scelta dei modelli è ricaduta nell'ambito dell'arredamento di interni, per la più vasta gamma di modelli reperibili e per la relativa semplicita degli stessi. Essendo necessario dividere i modelli in più componenti/mesh a cui attribuire i diversi materiali, anche lavorando con programmi di modellazione 3d, è stato molto più intuitivo lavorare con dei mobili anzichè modelli più complessi come automobili o utensili/arnesi di altro tipo.
