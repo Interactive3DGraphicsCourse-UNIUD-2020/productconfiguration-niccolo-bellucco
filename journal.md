@@ -87,3 +87,7 @@ Separazione della mesh dei cassetti dal resto della cassettiera, per permettere 
 * **5 febbario 2020**
 Nuova prospettiva della camera per miglior visuale, aggiunto un pivot anche per rotazione della poltrona. Aggiunto shader per materiale plastico.
 ![](report/34.png)
+
+* **28 marzo 2020**
+Sistemazione dell'utilizzo delle irradiance map e sostituzione dello sfondo della stanza con un ambiente più neutro tipo studio (gradiente circolare da nero a bianco). Irradiance ed Environment map mantenute per riflessi e illuminazione.
+![](report/studio.png)
