@@ -259,6 +259,9 @@
 				cdiff = pow( cdiff, vec3(2.2));
 				roughness = texture2D(roughnessMap, vUv*textureRepeat).r;
 
+	 			vec3 irradiance = textureCube( irradianceMap, worldN ).rgb;
+				irradiance = pow( irradiance, vec3(2.2));
+
 				vec3 fresnel = FSchlick( lDoth );
 				vec3 fresnel2 = FSchlick( lDoth2 );
 				vec3 fresnel3 = FSchlick( lDoth3 );
@@ -267,13 +270,7 @@
 				vec3 BRDF2 = (vec3(1.0)-fresnel2)*cdiff/PI + fresnel2*GSmith(nDotv,nDotl2)*DGGX(nDoth2,roughness*roughness)/(4.0*nDotl2*nDotv);
 				vec3 BRDF3 = (vec3(1.0)-fresnel3)*cdiff/PI + fresnel3*GSmith(nDotv,nDotl3)*DGGX(nDoth3,roughness*roughness)/(4.0*nDotl3*nDotv);
 
-				float blinnShininessExponent = GGXRoughnessToBlinnExponent(roughness);
-				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent,8 );
-
-	 			vec3 envLight = textureCubeLodEXT( envMap, vec3(-r.x, r.yz), specularMIPLevel ).rgb;
-				envLight = pow( envLight, vec3(2.2));
-
-				vec3 outRadiance = ( (BRDF*nDotl*clight) + (nDotl2*BRDF2*clight2) + (nDotl3*BRDF3*clight3) ) *PI;
+				vec3 outRadiance = ( (BRDF*nDotl*clight) + (nDotl3*BRDF3*clight3) ) *PI + (irradiance*cdiff/PI);
 
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
 
@@ -428,7 +425,7 @@
 				vec3 BRDF2 = fresnel2*GSmith(nDotv,nDotl2)*DGGX(nDoth2,roughness*roughness)/(4.0*nDotl2*nDotv);
 				vec3 BRDF3 = fresnel3*GSmith(nDotv,nDotl3)*DGGX(nDoth3,roughness*roughness)/(4.0*nDotl3*nDotv);
 
-				vec3 outRadiance = envLight * sBRDF + ( (BRDF*nDotl*clight) + (nDotl2*BRDF2*clight2) + (nDotl3*BRDF3*clight3) ) * PI;
+				vec3 outRadiance = envLight*sBRDF + ( (BRDF*nDotl*clight) + (nDotl3*BRDF3*clight3) ) * PI;
 				// gamma encode the final value
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
 				//gl_FragColor = vec4(r,1.0);
@@ -583,12 +580,12 @@
 	 			vec3 envLight = textureCubeLodEXT( envMap, vec3(-r.x, r.yz), specularMIPLevel ).rgb;
 				envLight = pow( envLight, vec3(2.2));
 
-				vec3 irradiance = textureCube( irradianceMap, wNormal).rgb;
+				vec3 irradiance = textureCube( irradianceMap, worldN).rgb;
 				irradiance = pow( irradiance, vec3(2.2));
 
 				vec3 sBRDF = BRDF_Specular_GGX_Environment(n, v, cspec, roughness);
 
-				vec3 outRadiance = (BRDF*nDotl*clight + BRDF3*clight3*nDotl3 + sBRDF*irradiance*cdiff) * PI;
+				vec3 outRadiance = (BRDF*nDotl*clight + BRDF3*clight3*nDotl3) * PI + (irradiance*cdiff/PI);
 
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
 			}
@@ -618,20 +615,20 @@
 			var lightParameters = {
 				red: 1.0,
 				green: 1.0,
-				blue: 0.6,
-				intensity: 0.8,
+				blue: 0.9,
+				intensity: 0.7,
 			};
 			var lightParameters2 = {
 				red: 1.0,
 				green: 1.0,
-				blue: 0.8,
+				blue: 0.9,
 				intensity: 0.2,
 			};
 			var lightParameters3 = {
 				red: 1.0,
 				green: 1.0,
 				blue: 1.0,
-				intensity: 0.7,
+				intensity: 1,
 			};
 
 			//parametri per materiali plastici
@@ -687,13 +684,23 @@
 			//cubemap per stanza
 			var imgl = new THREE.TextureLoader();
 			var path = 'textures/vetrata/'
-			var textureEnvironment = [
-				new THREE.MeshPhongMaterial({map: imgl.load(path+'px.png'), side: THREE.BackSide}),
+			var textureEnvironment= [
+			new THREE.MeshPhongMaterial({map: imgl.load(path+'px.png'), side: THREE.BackSide}),
 				new THREE.MeshPhongMaterial({map: imgl.load(path+'nx.png'), side: THREE.BackSide}),
 				new THREE.MeshPhongMaterial({map: imgl.load(path+'py.png'), side: THREE.BackSide}),
 				new THREE.MeshPhongMaterial({map: imgl.load(path+'ny.png'), side: THREE.BackSide}),
 				new THREE.MeshPhongMaterial({map: imgl.load(path+'pz.png'), side: THREE.BackSide}),
 				new THREE.MeshPhongMaterial({map: imgl.load(path+'nz.png'), side: THREE.BackSide}),
+			];
+
+			var path = 'textures/gradient/'
+			var studio = [
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'back3.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'back3.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'floor4.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'floor4.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'back3.png'), side: THREE.BackSide}),
+				new THREE.MeshPhongMaterial({map: imgl.load(path+'back3.png'), side: THREE.BackSide}),
 			];
 
 			//irradiance map per oggetti diffusivi
@@ -962,7 +969,7 @@
 
 				cubescene = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(80, 80, 80),
-					textureEnvironment
+					studio
 				);
 				cubescene.position.set(0, 20, 0);
 				cubescene.rotation.y = -150 * 3.13159 / 180;
@@ -970,6 +977,8 @@
 				cubescene.receiveShadow = true;
 				cubescene.castShadow = false;
 				scene.add(cubescene);
+
+
 
 				//oggetto pivot per ruotare la cassettiera, poichè ègli assi del modello non sono centrati sulla geometria
 				pivot = new THREE.Object3D(); 
@@ -1256,9 +1265,9 @@
 									uniformsDrawers.normalScale.value = new THREE.Vector2(textureParameters.normalScaleMetal, textureParameters.normalScaleMetal);
 									mesh.children[i].material = new THREE.ShaderMaterial({
 										extensions: materialExtensions,
-										uniforms: uniformsDrawers,
+										uniforms: uniformsDrawersMetal,
 										vertexShader: document.getElementById('vs').textContent,
-										fragmentShader: document.getElementById('fs_plastic').textContent
+										fragmentShader: document.getElementById('fs_metal').textContent
 									});
 								}
 
