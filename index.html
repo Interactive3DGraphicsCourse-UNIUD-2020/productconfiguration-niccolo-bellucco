@@ -593,7 +593,7 @@
 
 		<script>
 			var scene, camera, renderer;
-			var stats, controls, gui;
+			//var stats, controls, gui;
 
 			//variabili luci e oggetti
 			var lightMesh, lightMesh2, lightMesh3;
@@ -694,7 +694,7 @@
 			];
 
 			var path = 'textures/gradient/'
-			var studio = [
+			var gradientEnvironment = [
 				new THREE.MeshPhongMaterial({map: imgl.load(path+'back3.png'), side: THREE.BackSide}),
 				new THREE.MeshPhongMaterial({map: imgl.load(path+'back3.png'), side: THREE.BackSide}),
 				new THREE.MeshPhongMaterial({map: imgl.load(path+'floor4.png'), side: THREE.BackSide}),
@@ -714,7 +714,7 @@
 			//parametri globali per materiali
 			var textureParameters = {
 				normalScale: 1.1,
-				normalScaleMetal: 0.005,
+				normalScaleMetal: 0.05,
 				roughness: 0.65,
 				roughnessmetal: 0.3,
 				repeatS: 1.0,
@@ -941,9 +941,7 @@
 				renderer.setClearColor( 0xf0f0f0 );
 
 				camera = new THREE.PerspectiveCamera( 33, window.innerWidth/window.innerHeight, 1, 1000 );
-				//controllo della camera rimosso poichè è possibile la rotazione tramite interfaccia
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
-				
 				scene = new THREE.Scene();
 
 				camera.position.set( 20, 15, 65 );
@@ -969,7 +967,7 @@
 
 				cubescene = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(80, 80, 80),
-					studio //textureEnvironment
+					gradientEnvironment
 				);
 				cubescene.position.set(0, 20, 0);
 				cubescene.rotation.y = -150 * 3.13159 / 180;
@@ -978,14 +976,13 @@
 				cubescene.castShadow = false;
 				scene.add(cubescene);
 
-
-
-				//oggetto pivot per ruotare la cassettiera, poichè ègli assi del modello non sono centrati sulla geometria
+				//oggetto pivot per ruotare la cassettiera, poichè gli assi del modello non sono centrati sulla geometria
 				pivot = new THREE.Object3D(); 
 				pivot.name = 'pivot';
 				pivot.position.set(-22, -20, -10);
 				scene.add(pivot);
 
+				//oggetto pivot per ruotare la poltrona, poichè gli assi del modello non sono centrati sulla geometria
 				pivot2 = new THREE.Object3D();
 				pivot2.name = 'pivot2';
 				pivot2.position.set(18, -20, -11);
@@ -1005,11 +1002,6 @@
 				//seconda luce non casta ombra per non creare confusione dato che arriva dalla stessa direzione della prima
 				lightMesh2 = new THREE.PointLight(0xffffa0, lightParameters2.intensity,  400);
 				lightMesh2.position.set(17, -18, 10);
-				var sp2 = new THREE.Mesh( 
-					new THREE.SphereBufferGeometry( 2,8,8),
-					new THREE.MeshBasicMaterial ({color: 0x00ff00, wireframe:true})
-				);
-				lightMesh2.add(sp2);
 				
 				scene.add(lightMesh2);
 
