@@ -615,27 +615,27 @@
 			var lightParameters = {
 				red: 1.0,
 				green: 1.0,
-				blue: 0.9,
+				blue: 0.8,
 				intensity: 0.7,
 			};
 			var lightParameters2 = {
 				red: 1.0,
 				green: 1.0,
-				blue: 0.9,
-				intensity: 0.2,
+				blue: 0.8	,
+				intensity: 0.3,
 			};
 			var lightParameters3 = {
 				red: 1.0,
 				green: 1.0,
 				blue: 1.0,
-				intensity: 1,
+				intensity: 0.8,
 			};
 
 			//parametri per materiali plastici
 			var cdiffpl = {
 				red: 1,
 				green: 1,
-				blue: 1
+				blue: 0.65
 			}
 
 			//parametri per materiali metallici
@@ -969,7 +969,7 @@
 
 				cubescene = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(80, 80, 80),
-					studio
+					studio //textureEnvironment
 				);
 				cubescene.position.set(0, 20, 0);
 				cubescene.rotation.y = -150 * 3.13159 / 180;
@@ -1262,7 +1262,8 @@
 								});
 
 								if(mesh.children[i].name == 'a_low Low') {
-									uniformsDrawers.normalScale.value = new THREE.Vector2(textureParameters.normalScaleMetal, textureParameters.normalScaleMetal);
+									uniformsDrawersMetal.normalScale.value = new THREE.Vector2(textureParameters.normalScaleMetal, textureParameters.normalScaleMetal);
+									uniformsDrawersMetal.cspec.value = new THREE.Vector3(cspecalum.red, cspecalum.green, cspecalum.blue);
 									mesh.children[i].material = new THREE.ShaderMaterial({
 										extensions: materialExtensions,
 										uniforms: uniformsDrawersMetal,
